@@ -30,7 +30,7 @@ const getProg     = n => { const l = n.toLowerCase(); for (const p of PROG_TYPES
 const overall     = s => s.quality == null ? null : Math.round((s.quality + s.access + s.equity) / 3 * 10) / 10;
 const scCls       = n => n >= 8 ? 'high' : n >= 5 ? 'mid' : 'low';
 const fillCls     = n => 'fill-' + scCls(n);
-const gradeLabel  = l => `Grades ${l}–${HIGH_GRADE[l] || '12'}`;
+const gradeLabel  = l => t('gradesLabel', { low: l, high: HIGH_GRADE[l] || '12' });
 const mapsUrl     = a => 'https://maps.google.com/?q=' + encodeURIComponent(a + ', Los Angeles, CA');
 
 function scoreRow(label, score) {
@@ -74,11 +74,11 @@ function toggleFavorite(name, btnEl) {
   if (favorites.has(name)) {
     favorites.delete(name);
     if (btnEl) { btnEl.classList.remove('active'); btnEl.textContent = '🤍'; btnEl.setAttribute('aria-label','Save school'); }
-    showToast('Removed from saved schools');
+    showToast(t('removedToast'));
   } else {
     favorites.add(name);
     if (btnEl) { btnEl.classList.add('active'); btnEl.textContent = '❤️'; btnEl.setAttribute('aria-label','Remove from saved'); }
-    showToast('❤️ Saved! Find it in the Saved tab.');
+    showToast(t('savedToast'));
   }
   // Sync all other fav buttons for the same school
   document.querySelectorAll(`.fav-btn`).forEach(b => {
@@ -98,8 +98,8 @@ function renderSaved() {
   if (saved.length === 0) {
     panel.innerHTML = `<div class="saved-empty">
       <div class="icon">🤍</div>
-      <h3>No saved schools yet</h3>
-      <p>Tap the heart icon on any school to save it here for easy comparison later.</p>
+      <h3>${t('noSaved')}</h3>
+      <p>${t('noSavedHint')}</p>
     </div>`;
     return;
   }
@@ -175,14 +175,14 @@ function initMap() {
       <div class="map-popup-name">${s.name}</div>
       <div class="map-popup-grade">${gradeLabel(s.low_grade)}${p ? ' · ' + p.label : ''}</div>
       <div class="map-popup-scores">
-        ⭐ Overall: <strong>${ov || '?'}/10</strong><br>
-        🎓 Quality: ${s.quality || '?'}/10 &nbsp;
-        🚪 Access: ${s.access || '?'}/10 &nbsp;
-        ⚖️ Equity: ${s.equity || '?'}/10
+        ⭐ ${t('mapOverall')}: <strong>${ov || '?'}/10</strong><br>
+        🎓 ${t('quality')}: ${s.quality || '?'}/10 &nbsp;
+        🚪 ${t('access')}: ${s.access || '?'}/10 &nbsp;
+        ⚖️ ${t('equity')}: ${s.equity || '?'}/10
       </div>
-      <a class="map-popup-link" href="${APPLY_URL}" target="_blank" rel="noopener">Apply Now →</a>
+      <a class="map-popup-link" href="${APPLY_URL}" target="_blank" rel="noopener">${t('applyNow')}</a>
       &nbsp;
-      <a class="map-popup-link" href="${mapsUrl(s.address)}" target="_blank" rel="noopener" style="background:#546E7A">📍 Directions</a>
+      <a class="map-popup-link" href="${mapsUrl(s.address)}" target="_blank" rel="noopener" style="background:#546E7A">${t('directions')}</a>
     `, { maxWidth: 260 });
   });
 
@@ -191,10 +191,10 @@ function initMap() {
   legend.onAdd = () => {
     const div = L.DomUtil.create('div', '');
     div.style.cssText = 'background:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,.15)';
-    div.innerHTML = `<strong style="display:block;margin-bottom:4px">Score</strong>
-      <span style="color:#2E7D32">●</span> 8–10 High<br>
-      <span style="color:#E65100">●</span> 5–7 Mid<br>
-      <span style="color:#C62828">●</span> 1–4 Low`;
+    div.innerHTML = `<strong style="display:block;margin-bottom:4px">${t('mapScore')}</strong>
+      <span style="color:#2E7D32">●</span> ${t('mapHigh')}<br>
+      <span style="color:#E65100">●</span> ${t('mapMid')}<br>
+      <span style="color:#C62828">●</span> ${t('mapLow')}`;
     return div;
   };
   legend.addTo(mapInstance);
@@ -207,16 +207,16 @@ function renderCard(s, idx) {
   const ov  = overall(s);
   const p   = getProg(s.name);
   const ribbons = [];
-  if (topRatedIds.has(s.name))  ribbons.push(`<div class="ribbon" aria-label="Top Rated">⭐ Top Rated</div>`);
-  if (topEquityIds.has(s.name)) ribbons.push(`<div class="ribbon eq" aria-label="High Equity">🏅 High Equity</div>`);
+  if (topRatedIds.has(s.name))  ribbons.push(`<div class="ribbon" aria-label="Top Rated">${t('topRated')}</div>`);
+  if (topEquityIds.has(s.name)) ribbons.push(`<div class="ribbon eq" aria-label="High Equity">${t('highEquity')}</div>`);
   const badge = p ? `<span class="prog-badge" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">${p.label}</span>` : '';
   const oc    = ov != null ? scCls(ov) : '';
   const circ  = ov != null
     ? `<div class="overall ${oc}" aria-label="Overall score ${ov} out of 10"><span class="overall-n">${ov}</span><span class="overall-d">/10</span></div>`
     : '';
   const sc = s.quality != null
-    ? `<div class="scores">${scoreRow('Quality',s.quality)}${scoreRow('Access',s.access)}${scoreRow('Equity',s.equity)}</div>`
-    : `<span style="font-size:12px;color:var(--text-sub)">Not yet scored</span>`;
+    ? `<div class="scores">${scoreRow(t('quality'),s.quality)}${scoreRow(t('access'),s.access)}${scoreRow(t('equity'),s.equity)}</div>`
+    : `<span style="font-size:12px;color:var(--text-sub)">${t('notScored')}</span>`;
   const favActive = favorites.has(s.name);
 
   return `<div class="card" style="animation-delay:${Math.min(idx,20)*28}ms" data-school="${s.name.replace(/"/g,'&quot;')}">
@@ -249,7 +249,7 @@ function toggleStats() {
   statsOpen = !statsOpen;
   document.getElementById('stats-bar').classList.toggle('collapsed', !statsOpen);
   const btn = document.getElementById('stats-toggle-btn');
-  btn.textContent = statsOpen ? '▾ Hide district averages' : '▸ Show district averages';
+  btn.textContent = statsOpen ? t('hideStats') : t('showStats');
   btn.setAttribute('aria-expanded', String(statsOpen));
 }
 
@@ -296,8 +296,8 @@ function applyFilters() {
   if (s === 'equity')  list.sort((a,b) => (b.equity||0)  - (a.equity||0));
 
   document.getElementById('count-label').textContent = list.length === allSchools.length
-    ? `Showing all ${allSchools.length} magnet schools`
-    : `${list.length} of ${allSchools.length} schools`;
+    ? t('showingAll', { n: allSchools.length })
+    : t('showingSome', { n: list.length, total: allSchools.length });
 
   const fc = activeFC();
   document.getElementById('clear-btn').classList.toggle('show', fc > 0);
@@ -308,7 +308,7 @@ function applyFilters() {
   );
 
   document.getElementById('list-content').innerHTML = list.length === 0
-    ? `<div class="no-results"><div class="icon">🔍</div><p>No schools match your filters.</p><button class="btn-primary" onclick="clearFilters()" style="margin:0 auto">✕ Clear filters</button></div>`
+    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noFilterResults')}</p><button class="btn-primary" onclick="clearFilters()" style="margin:0 auto">${t('clearFilters')}</button></div>`
     : `<div class="list">${list.map((sc, i) => renderCard(sc, i)).join('')}</div>`;
 }
 
@@ -361,6 +361,8 @@ async function loadSchools() {
 
 /* ── Init ───────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  document.documentElement.lang = LANG;
+  applyStaticI18n();
   loadFavorites();
   loadSchools().then(() => {
     if (!initFromURL()) {

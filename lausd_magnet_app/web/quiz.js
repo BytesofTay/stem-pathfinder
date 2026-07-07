@@ -2,24 +2,26 @@
    Quiz, Matching, and Results
    ========================================= */
 
+/* Option labels resolve through t() at render time so language switches
+   re-translate the quiz in place. */
 const QUIZ = [
-  { id:'grade', q:"What grade is your child in?", hint:"We'll show schools they can still apply to.", multi:false, opts:[
-    { v:'elem',  i:'🏫', l:'Elementary',    s:'Grades K – 5' },
-    { v:'mid',   i:'📚', l:'Middle School',  s:'Grades 6 – 8' },
-    { v:'high',  i:'🎓', l:'High School',    s:'Grades 9 – 12' },
+  { id:'grade', qKey:'q1', hintKey:'q1hint', multi:false, opts:[
+    { v:'elem',  i:'🏫', lKey:'q1optElem', sKey:'q1subElem' },
+    { v:'mid',   i:'📚', lKey:'q1optMid',  sKey:'q1subMid' },
+    { v:'high',  i:'🎓', lKey:'q1optHigh', sKey:'q1subHigh' },
   ]},
-  { id:'interest', q:"What is your child most excited about?", hint:"Pick as many as you like.", multi:true, opts:[
-    { v:'science',  i:'🔬', l:'Science & Nature',       s:'Biology, environment, earth science' },
-    { v:'tech',     i:'💻', l:'Computers & Technology', s:'Coding, robotics, digital media' },
-    { v:'medical',  i:'🏥', l:'Medicine & Health',      s:'Biotech, pre-med, health sciences' },
-    { v:'engineer', i:'⚙️', l:'Engineering & Building', s:'Aerospace, architecture, math' },
-    { v:'arts',     i:'🎨', l:'Art + STEM',             s:'Design, film, creative technology' },
-    { v:'any',      i:'🌟', l:'Not sure yet',           s:'Show me the best STEM programs' },
+  { id:'interest', qKey:'q2', hintKey:'q2hint', multi:true, opts:[
+    { v:'science',  i:'🔬', lKey:'q2optScience',  sKey:'q2subScience' },
+    { v:'tech',     i:'💻', lKey:'q2optTech',     sKey:'q2subTech' },
+    { v:'medical',  i:'🏥', lKey:'q2optMedical',  sKey:'q2subMedical' },
+    { v:'engineer', i:'⚙️', lKey:'q2optEngineer', sKey:'q2subEngineer' },
+    { v:'arts',     i:'🎨', lKey:'q2optArts',     sKey:'q2subArts' },
+    { v:'any',      i:'🌟', lKey:'q2optAny',      sKey:'q2subAny' },
   ]},
-  { id:'priority', q:"What matters most to you?", hint:"We'll use this to rank your matches.", multi:false, opts:[
-    { v:'quality', i:'⭐', l:'Best academic program',    s:'Highest-rated STEM curriculum' },
-    { v:'access',  i:'🏘️', l:'Accessible to more kids',  s:'Accepts from earlier grade levels' },
-    { v:'equity',  i:'⚖️', l:'Welcoming to all students', s:'Strong diversity & inclusion' },
+  { id:'priority', qKey:'q3', hintKey:'q3hint', multi:false, opts:[
+    { v:'quality', i:'⭐',  lKey:'q3optQuality', sKey:'q3subQuality' },
+    { v:'access',  i:'🏘️', lKey:'q3optAccess',  sKey:'q3subAccess' },
+    { v:'equity',  i:'⚖️', lKey:'q3optEquity',  sKey:'q3subEquity' },
   ]},
 ];
 
@@ -31,8 +33,8 @@ const INT_KEYS    = {
   engineer:['engineering','stem','tech','aerospace','math','polytechnic'],
   arts:    ['arts','performing','visual','film','theater','drama','music','journalism','media'],
 };
-const INT_LABELS  = { science:'Science & Nature',tech:'Computers & Technology',medical:'Medicine & Health',engineer:'Engineering & Building',arts:'Art + STEM',any:'All STEM programs' };
-const GRADE_LABELS = { elem:'elementary schooler',mid:'middle schooler',high:'high schooler' };
+const INT_LABEL_KEYS   = { science:'intScience', tech:'intTech', medical:'intMedical', engineer:'intEngineer', arts:'intArts', any:'intAny' };
+const GRADE_LABEL_KEYS = { elem:'gradeElem', mid:'gradeMid', high:'gradeHigh' };
 
 let qStep = 0;
 let qAns  = { interest:[] };
@@ -52,16 +54,17 @@ function renderStep() {
   const s   = QUIZ[qStep];
   const pct = Math.round((qStep + 1) / QUIZ.length * 100);
   document.getElementById('qpf').style.width = pct + '%';
-  document.getElementById('step-label').textContent = `Step ${qStep + 1} of ${QUIZ.length}`;
+  document.getElementById('step-label').textContent = t('stepOf', { n: qStep + 1, total: QUIZ.length });
   document.getElementById('step-pct').textContent   = pct + '%';
   document.getElementById('btn-back').style.visibility = qStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('btn-next').textContent = qStep === QUIZ.length - 1 ? 'See my matches ✓' : 'Next →';
+  document.getElementById('btn-back').textContent = t('back');
+  document.getElementById('btn-next').textContent = qStep === QUIZ.length - 1 ? t('seeMatches') : t('next');
 
   const cur = s.multi ? (qAns.interest || []) : [qAns[s.id]];
   document.getElementById('quiz-body').innerHTML = `
-    <h2>${s.q}</h2>
-    <p class="quiz-hint">${s.hint}</p>
-    <div class="option-grid" role="group" aria-label="${s.q}">
+    <h2>${t(s.qKey)}</h2>
+    <p class="quiz-hint">${t(s.hintKey)}</p>
+    <div class="option-grid" role="group" aria-label="${t(s.qKey)}">
       ${s.opts.map(o => `
         <div class="opt ${cur.includes(o.v) ? 'selected' : ''}"
              role="button" tabindex="0" aria-pressed="${cur.includes(o.v)}"
@@ -69,8 +72,8 @@ function renderStep() {
              onkeydown="if(event.key==='Enter'||event.key===' ')pick('${s.id}','${o.v}',${s.multi})"
              data-v="${o.v}">
           <div class="opt-icon" aria-hidden="true">${o.i}</div>
-          <div class="opt-label">${o.l}</div>
-          <div class="opt-sub">${o.s}</div>
+          <div class="opt-label">${t(o.lKey)}</div>
+          <div class="opt-sub">${t(o.sKey)}</div>
         </div>`).join('')}
     </div>`;
   updateNext();
@@ -126,22 +129,20 @@ function matchSchools(gradeKey, interests, sortKey) {
 
 function whyBlurb(s) {
   const ov = overall(s);
-  if (topRatedIds.has(s.name))
-    return `⭐ <strong>Top 10 school district-wide</strong> — one of the highest-rated magnet programs in LAUSD.`;
+  if (topRatedIds.has(s.name)) return t('whyTop');
   const p = getProg(s.name);
-  if (p?.label.includes('Medical') && s.quality >= 8)
-    return `🏥 <strong>Top-rated medical magnet</strong> — specialized pre-med and biotech curriculum.`;
-  if (p?.label.includes('STEM') && s.quality >= 9)
-    return `🔬 <strong>One of LAUSD's highest-rated STEM programs</strong> — rigorous science and engineering curriculum.`;
-  if (s.equity >= 9)
-    return `⚖️ <strong>Strong community school</strong> — deeply committed to serving underserved neighborhoods in LA.`;
-  if (s.access === 9)
-    return `🏫 <strong>Starts in Kindergarten</strong> — your child can grow with this program from day one. Apply early!`;
-  if (s.quality >= 8 && s.equity >= 7)
-    return `✨ <strong>High quality & inclusive</strong> — strong academics in a diverse, welcoming environment.`;
+  if (p?.label.includes('Medical') && s.quality >= 8) return t('whyMedical');
+  if (p?.label.includes('STEM') && s.quality >= 9) return t('whyStem');
+  if (s.equity >= 9) return t('whyEquity');
+  if (s.access === 9) return t('whyK');
+  if (s.quality >= 8 && s.equity >= 7) return t('whyInclusive');
   if (p)
-    return `${p.label.split(' ')[0]} <strong>Strong ${p.label.replace(/^[^\s]+ /, '')} program</strong> — serving ${gradeLabel(s.low_grade)} with a specialized curriculum.`;
-  return `🎓 <strong>Solid magnet program</strong> — serving ${gradeLabel(s.low_grade)} with an overall score of ${ov}/10.`;
+    return t('whyProgram', {
+      icon: p.label.split(' ')[0],
+      prog: p.label.replace(/^[^\s]+ /, ''),
+      grades: gradeLabel(s.low_grade),
+    });
+  return t('whySolid', { grades: gradeLabel(s.low_grade), score: ov });
 }
 
 /* ── Results ────────────────────────────── */
@@ -152,17 +153,17 @@ function showResults() {
   document.getElementById('results-panel').classList.add('active');
   show('results-panel', 'block');
 
-  const gl = GRADE_LABELS[qAns.grade] || 'student';
-  const il = (qAns.interest || []).map(i => INT_LABELS[i] || i).join(' · ') || 'STEM';
-  document.getElementById('results-sub').textContent  = `For a ${gl} interested in ${il}`;
-  document.getElementById('match-pill').textContent   = `${allResults.length} schools found`;
+  const gl = GRADE_LABEL_KEYS[qAns.grade] ? t(GRADE_LABEL_KEYS[qAns.grade]) : 'student';
+  const il = (qAns.interest || []).map(i => INT_LABEL_KEYS[i] ? t(INT_LABEL_KEYS[i]) : i).join(' · ') || 'STEM';
+  document.getElementById('results-sub').textContent  = t('resultsFor', { grade: gl, interests: il });
+  document.getElementById('match-pill').textContent   = t('schoolsFound', { n: allResults.length });
 
   renderResultCards(allResults.slice(0, 5), true);
   const rem = allResults.length - 5;
   const sw  = document.getElementById('see-more-wrap');
   if (rem > 0) {
     sw.style.display = '';
-    document.getElementById('see-more-btn').textContent = `Show ${rem} more schools ↓`;
+    document.getElementById('see-more-btn').textContent = t('showMore', { n: rem });
   } else {
     sw.style.display = 'none';
   }
@@ -181,9 +182,9 @@ function resultCardHtml(s, i) {
     ? `<span class="prog-badge" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">${p.label}</span>`
     : '';
   const chips = s.quality != null ? `
-    <span class="score-chip" style="background:var(--${scCls(s.quality)}-bg);border-color:var(--${scCls(s.quality)}-bd);color:var(--${scCls(s.quality)})">Quality ${s.quality}/10</span>
-    <span class="score-chip" style="background:var(--${scCls(s.access)}-bg);border-color:var(--${scCls(s.access)}-bd);color:var(--${scCls(s.access)})">Access ${s.access}/10</span>
-    <span class="score-chip" style="background:var(--${scCls(s.equity)}-bg);border-color:var(--${scCls(s.equity)}-bd);color:var(--${scCls(s.equity)})">Equity ${s.equity}/10</span>` : '';
+    <span class="score-chip" style="background:var(--${scCls(s.quality)}-bg);border-color:var(--${scCls(s.quality)}-bd);color:var(--${scCls(s.quality)})">${t('quality')} ${s.quality}/10</span>
+    <span class="score-chip" style="background:var(--${scCls(s.access)}-bg);border-color:var(--${scCls(s.access)}-bd);color:var(--${scCls(s.access)})">${t('access')} ${s.access}/10</span>
+    <span class="score-chip" style="background:var(--${scCls(s.equity)}-bg);border-color:var(--${scCls(s.equity)}-bd);color:var(--${scCls(s.equity)})">${t('equity')} ${s.equity}/10</span>` : '';
   const favActive = favorites.has(s.name);
   return `<div class="rcard ${top ? 'top' : ''}" style="animation-delay:${i * 55}ms">
     <div class="rcard-inner">
@@ -198,7 +199,7 @@ function resultCardHtml(s, i) {
         <div class="rcard-why">${whyBlurb(s)}</div>
         <div class="rcard-chips">${chips}</div>
         <div class="rcard-actions">
-          <a class="btn-apply" href="${APPLY_URL}" target="_blank" rel="noopener noreferrer">Apply Now →</a>
+          <a class="btn-apply" href="${APPLY_URL}" target="_blank" rel="noopener noreferrer">${t('applyNow')}</a>
           <a class="btn-map" href="${mapsUrl(s.address)}" target="_blank" rel="noopener noreferrer">📍 ${s.address}</a>
           <button class="fav-btn ${favActive ? 'active' : ''}"
                   onclick="toggleFavorite('${s.name.replace(/'/g,"\\'")}',this)"
@@ -214,7 +215,7 @@ function resultCardHtml(s, i) {
 
 function renderResultCards(schools, replace) {
   const html = schools.length === 0
-    ? `<div class="no-results"><div class="icon">🔍</div><p>No schools matched. Try different interests or start over.</p><button class="btn-primary" onclick="startQuiz()">↺ Start over</button></div>`
+    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noMatches')}</p><button class="btn-primary" onclick="startQuiz()">${t('startOver')}</button></div>`
     : schools.map((s, i) => resultCardHtml(s, i)).join('');
   const el = document.getElementById('results-list');
   if (replace) el.innerHTML = html; else el.insertAdjacentHTML('beforeend', html);
@@ -225,7 +226,7 @@ function showMore() {
   const more  = allResults.slice(shown, shown + 10);
   renderResultCards(more, false);
   const rem = allResults.length - document.querySelectorAll('.rcard').length;
-  if (rem > 0) document.getElementById('see-more-btn').textContent = `Show ${rem} more schools ↓`;
+  if (rem > 0) document.getElementById('see-more-btn').textContent = t('showMore', { n: rem });
   else document.getElementById('see-more-wrap').style.display = 'none';
 }
 
@@ -239,14 +240,14 @@ function pushResultsURL() {
 function shareResults() {
   const url = location.href;
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copied to clipboard!'));
+    navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
   } else {
     // Fallback for older browsers
     const ta = document.createElement('textarea');
     ta.value = url; document.body.appendChild(ta);
     ta.select(); document.execCommand('copy');
     document.body.removeChild(ta);
-    showToast('🔗 Link copied!');
+    showToast(t('linkCopied'));
   }
 }
 

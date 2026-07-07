@@ -595,6 +595,7 @@ a.map-link:hover { color: var(--blue-700); text-decoration: underline; }
 @media (max-width: 768px) {
   .appbar-title { font-size: 13px; }
   .nav-btn { display: none; }
+  .nav-btn.lang-btn { display: inline-block; } /* language switch must stay reachable on phones */
 
   .hero { padding: 36px 20px 32px; }
   .hero h1 { font-size: 26px; }
