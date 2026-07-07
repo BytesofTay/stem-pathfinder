@@ -1,0 +1,34 @@
+name: Update school directory
+
+on:
+  schedule:
+    - cron: '0 15 * * 1'   # Mondays ~8am Pacific (15:00 UTC)
+  workflow_dispatch:        # allows manual runs from the Actions tab
+
+permissions:
+  contents: write           # lets the workflow commit refreshed data back
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Update schools and deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: python3 update_schools.py
+
+      - name: Commit refreshed data back to the repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lausd_magnet_app/web/schools_data.js lausd_magnet_app/web/index.html
+          git diff --cached --quiet || { git commit -m "Auto-update school directory from CDE data"; git push; }

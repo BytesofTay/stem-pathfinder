@@ -1,0 +1,1082 @@
+[
+  {
+    "name": "Abraham Lincoln Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "3501 North Broadway"
+  },
+  {
+    "name": "Academy for Enriched Sciences",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "17551 Miranda St."
+  },
+  {
+    "name": "Alexander Fleming Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "25425 Walnut St."
+  },
+  {
+    "name": "Alexander Hamilton Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "2955 Robertson Blvd."
+  },
+  {
+    "name": "Alfred B. Nobel Charter Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "9950 Tampa Ave."
+  },
+  {
+    "name": "Allesandro Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2210 Riverside Dr."
+  },
+  {
+    "name": "Ambler Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "319 East Sherman Dr."
+  },
+  {
+    "name": "Amestoy Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1048 West 149th St."
+  },
+  {
+    "name": "Arroyo Seco Museum Science",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4805 Sycamore Terr."
+  },
+  {
+    "name": "Audubon Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "4120 11th Ave."
+  },
+  {
+    "name": "Balboa Gifted/High Ability Magnet Elementary",
+    "low_grade": "1",
+    "magnet": true,
+    "address": "17020 Labrador St."
+  },
+  {
+    "name": "Baldwin Hills Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5421 Rodeo Rd."
+  },
+  {
+    "name": "Bell Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4328 Bell Ave."
+  },
+  {
+    "name": "Belvedere Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "312 North Record Ave."
+  },
+  {
+    "name": "Betty Plasencia Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1321 Cortez St."
+  },
+  {
+    "name": "Braddock Drive Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4711 Inglewood Blvd."
+  },
+  {
+    "name": "Brentwood Science",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "740 Gretna Green Way"
+  },
+  {
+    "name": "Broadacres Avenue Elementary Visual & Performing Arts Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "19424 South Broadacres Ave."
+  },
+  {
+    "name": "Bryson Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4470 Missouri Ave."
+  },
+  {
+    "name": "Buchanan Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5024 Buchanan St."
+  },
+  {
+    "name": "Canoga Park Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "22250 Elkwood St."
+  },
+  {
+    "name": "Canoga Park Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "6850 Topanga Canyon Blvd."
+  },
+  {
+    "name": "Canterbury Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "13670 Montague St."
+  },
+  {
+    "name": "Carthay Elementary Of Environmental Studies Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "6351 West Olympic Blvd."
+  },
+  {
+    "name": "Cesar E. Chavez Learning Academies-Arts/Theatre/Entertain Mag",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1001 Arroyo Ave."
+  },
+  {
+    "name": "Charles Drew Middle",
+    "low_grade": "7",
+    "magnet": true,
+    "address": "8511 Compton Ave."
+  },
+  {
+    "name": "Chatsworth Park ES Urban Planning/Community Development Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "22005 Devonshire St."
+  },
+  {
+    "name": "Chester W. Nimitz Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "6021 Carmelita Ave."
+  },
+  {
+    "name": "Clifford Street Elementary Math & Technology Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2150 Duane St."
+  },
+  {
+    "name": "Commonwealth Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "215 South Commonwealth Ave."
+  },
+  {
+    "name": "Community Magnet Charter Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "11301 Bellagio Rd."
+  },
+  {
+    "name": "Cowan Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "7615 Cowan Ave."
+  },
+  {
+    "name": "Crenshaw Science, Technology, Engineering, Math and Medicine Magnet",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "5010 11th Ave."
+  },
+  {
+    "name": "Crescent Heights Boulevard Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1661 South Crescent Heights"
+  },
+  {
+    "name": "Daniel Pearl Journalism & Communications Magnet",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "6649 Balboa Blvd."
+  },
+  {
+    "name": "Downtown Business High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1200 West Colton St."
+  },
+  {
+    "name": "Dr. Sammy Lee Medical and Health Science Magnet Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "3600 Council St."
+  },
+  {
+    "name": "Eagle Rock Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2057 Fair Park Ave."
+  },
+  {
+    "name": "Eagle Rock High",
+    "low_grade": "7",
+    "magnet": true,
+    "address": "1750 Yosemite Dr."
+  },
+  {
+    "name": "Eastside High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "319 North Humphreys Ave."
+  },
+  {
+    "name": "Edwin Markham Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1650 East 104th St."
+  },
+  {
+    "name": "El Sereno Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "2839 North Eastern Ave."
+  },
+  {
+    "name": "Elysian Heights ES Arts Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1562 Baxter St."
+  },
+  {
+    "name": "Ernest Lawrence Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "10100 Variel Ave."
+  },
+  {
+    "name": "Esteban Torres East LA Performing Arts Magnet",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4211 Dozier St."
+  },
+  {
+    "name": "Euclid Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "806 Euclid Ave."
+  },
+  {
+    "name": "Fairfax Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "7850 Melrose Ave."
+  },
+  {
+    "name": "Francisco Bravo Medical Magnet High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1200 North Cornwell St."
+  },
+  {
+    "name": "Francisco Sepulveda Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "15330 Plummer St."
+  },
+  {
+    "name": "Gardena Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1301 West 182nd St."
+  },
+  {
+    "name": "Garvanza Elementary School Technology and Leadership Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "317 North Avenue 62"
+  },
+  {
+    "name": "Gaspar De Portola Charter Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "18720 Linnet St."
+  },
+  {
+    "name": "George K. Porter Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "15960 Kingsbury St."
+  },
+  {
+    "name": "George Washington Preparatory High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "10860 South Denker Ave."
+  },
+  {
+    "name": "Glassell Park ES Science, Technology, Engineering, Arts and Math Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2211 West Avenue 30"
+  },
+  {
+    "name": "Gledhill Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "16030 Gledhill St."
+  },
+  {
+    "name": "Glenn Hammond Curtiss Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1254 East Helmick St."
+  },
+  {
+    "name": "Griffith Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "4765 East Fourth St."
+  },
+  {
+    "name": "Grover Cleveland Charter High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "8140 Vanalden Ave."
+  },
+  {
+    "name": "Haskell Elementary Science Technology Engineering Arts And Mathematics (STEAM) Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "15850 Tulsa St."
+  },
+  {
+    "name": "Henry T. Gage Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "2880 East Gage Ave."
+  },
+  {
+    "name": "Hillcrest Drive Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4041 Hillcrest Dr."
+  },
+  {
+    "name": "Hillery T. Broadous Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "12561 Filmore St."
+  },
+  {
+    "name": "Hollenbeck Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "2510 East Sixth St."
+  },
+  {
+    "name": "Hollywood Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1521 North Highland Ave."
+  },
+  {
+    "name": "Hubert Howe Bancroft Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "929 North Las Palmas Ave."
+  },
+  {
+    "name": "Humphreys Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "500 South Humphreys Ave."
+  },
+  {
+    "name": "Independence Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "8435 Victoria Ave."
+  },
+  {
+    "name": "Iovine and Young Center",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4120 11th Ave."
+  },
+  {
+    "name": "James A. Garfield Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "5101 East Sixth St."
+  },
+  {
+    "name": "James Madison Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "13000 Hart St."
+  },
+  {
+    "name": "James Monroe High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "9229 Haskell Ave."
+  },
+  {
+    "name": "John Adams Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "151 West 30th St."
+  },
+  {
+    "name": "John B. Monlux Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "6051 Bellaire Ave."
+  },
+  {
+    "name": "John Burroughs Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "600 South McCadden Pl."
+  },
+  {
+    "name": "John C. Fremont Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "7676 South San Pedro St."
+  },
+  {
+    "name": "John F. Kennedy High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "11254 Gothic Ave."
+  },
+  {
+    "name": "John H. Francis Polytechnic",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "12431 Roscoe Blvd."
+  },
+  {
+    "name": "John Marshall Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "3939 Tracy St."
+  },
+  {
+    "name": "John Muir Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5929 South Vermont Ave."
+  },
+  {
+    "name": "Joseph Le Conte Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1316 North Bronson Ave."
+  },
+  {
+    "name": "Kester Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5353 Kester Ave."
+  },
+  {
+    "name": "King/Drew Medical Magnet High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1601 East 120th St."
+  },
+  {
+    "name": "Lake Balboa College Preparatory Magnet K-12",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "6701 Balboa Blvd."
+  },
+  {
+    "name": "Lomita Math/Science/Technology Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2211 247th St."
+  },
+  {
+    "name": "Lorne Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "17440 Lorne St."
+  },
+  {
+    "name": "Los Angeles Center for Enriched Studies",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5931 West 18th St."
+  },
+  {
+    "name": "Los Angeles Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4650 West Olympic Blvd."
+  },
+  {
+    "name": "Los Feliz Science/Tech/Engineer/Math/Medicine Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1740 North New Hampshire Ave."
+  },
+  {
+    "name": "Louis Armstrong Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5041 Sunnyslope Ave."
+  },
+  {
+    "name": "Lovelia P. Flournoy Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1630 East 111th St."
+  },
+  {
+    "name": "Loyola Village Fine And Performing Arts Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "8821 Villanova Ave."
+  },
+  {
+    "name": "Luther Burbank Middle School Science, Technology, Engineering, Arts and Math Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "6460 North Figueroa St."
+  },
+  {
+    "name": "Manual Arts Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4131 South Vermont Ave."
+  },
+  {
+    "name": "Marina del Rey Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "12500 Braddock Dr."
+  },
+  {
+    "name": "Mark Twain Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "2224 Walgrove Ave."
+  },
+  {
+    "name": "Marvin Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2411 Marvin Ave."
+  },
+  {
+    "name": "Mary McLeod Bethune Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "155 West 69th St."
+  },
+  {
+    "name": "Math, Science, & Technology Magnet Academy at Roosevelt High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "2530 East 4th St."
+  },
+  {
+    "name": "Mayall Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "16701 Mayall St."
+  },
+  {
+    "name": "Maywood Center for Enriched Studies",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5800 King Ave."
+  },
+  {
+    "name": "Melrose Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "731 North Detroit St."
+  },
+  {
+    "name": "Mid-City's Prescott School of Enriched Sciences",
+    "low_grade": "1",
+    "magnet": true,
+    "address": "3150 West Adams Blvd."
+  },
+  {
+    "name": "Miles Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "6720 Miles Ave."
+  },
+  {
+    "name": "Montara Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "10018 Montara Ave."
+  },
+  {
+    "name": "Monte Vista Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5423 Monte Vista St."
+  },
+  {
+    "name": "Mt. Gleason Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "10965 Mt. Gleason Ave."
+  },
+  {
+    "name": "Multnomah Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2101 North Indiana Ave."
+  },
+  {
+    "name": "Nathaniel Narbonne Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "24300 Western Ave."
+  },
+  {
+    "name": "North Hollywood Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "5231 Colfax Ave."
+  },
+  {
+    "name": "Nueva Vista Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4412 Randolph St."
+  },
+  {
+    "name": "Oliver Wendell Holmes Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "9351 Paso Robles Ave."
+  },
+  {
+    "name": "One Hundred Seventh Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "147 East 107th St."
+  },
+  {
+    "name": "Open Charter Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5540 West 77th St."
+  },
+  {
+    "name": "Orthopaedic Hospital",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "300 West 23rd St."
+  },
+  {
+    "name": "Orville Wright Engineering and Design Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "6550 West 80th St."
+  },
+  {
+    "name": "Pacoima Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "9919 Laurel Canyon Blvd."
+  },
+  {
+    "name": "Palisades Charter High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "15777 Bowdoin St."
+  },
+  {
+    "name": "Palms Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "10860 Woodbine St."
+  },
+  {
+    "name": "Park Western Place Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1214 Park Western Pl."
+  },
+  {
+    "name": "Paseo del Rey Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "7751 Paseo del Rey"
+  },
+  {
+    "name": "Patrick Henry Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "17340 San Jose St."
+  },
+  {
+    "name": "Paul Revere Charter Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1450 Allenford Ave."
+  },
+  {
+    "name": "Phineas Banning Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1527 Lakme Ave."
+  },
+  {
+    "name": "Point Fermin Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "3333 Kerckhoff Ave."
+  },
+  {
+    "name": "Purche Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "13210 Purche Ave."
+  },
+  {
+    "name": "Reseda Charter High",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "18230 Kittridge St."
+  },
+  {
+    "name": "Richard E. Byrd Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "8501 Arleta Ave."
+  },
+  {
+    "name": "Robert E. Peary Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1415 West Gardena Blvd."
+  },
+  {
+    "name": "Robert Frost Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "12314 Bradford Pl."
+  },
+  {
+    "name": "Robert Louis Stevenson College and Career Preparatory",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "725 South Indiana St."
+  },
+  {
+    "name": "Rockdale Visual & Performing Arts Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1303 Yosemite Dr."
+  },
+  {
+    "name": "Rosewood Avenue Elementary School Urban Planning and Urban Design Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "503 North Croft Ave."
+  },
+  {
+    "name": "Rudecinda Sepulveda Dodson Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "28014 Montereina Dr."
+  },
+  {
+    "name": "Russell Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1263 East Firestone Blvd."
+  },
+  {
+    "name": "San Antonio Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "6222 State St."
+  },
+  {
+    "name": "San Fernando Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "11133 O'Melveny Ave."
+  },
+  {
+    "name": "San Jose Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "14928 Clymer St."
+  },
+  {
+    "name": "San Miguel Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "9801 San Miguel Ave."
+  },
+  {
+    "name": "San Pascual Elementary Science Technology Engineering Arts And Mathematics (STEAM) Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "815 San Pascual Ave."
+  },
+  {
+    "name": "San Pedro Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "1610 South Leland St."
+  },
+  {
+    "name": "Science Academy STEM Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5525 Vineland Ave."
+  },
+  {
+    "name": "Seventh Street Elementary Arts Integration Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1570 West Seventh St."
+  },
+  {
+    "name": "Seventy-Fourth Street Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2112 West 74th St."
+  },
+  {
+    "name": "Sherman Oaks Center for Enriched Studies",
+    "low_grade": "4",
+    "magnet": true,
+    "address": "18605 Erwin St."
+  },
+  {
+    "name": "Sotomayor Arts and Sciences Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "2050 San Fernando Rd."
+  },
+  {
+    "name": "South East High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "2720 Tweedy Blvd."
+  },
+  {
+    "name": "South Gate Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "4100 Firestone Blvd."
+  },
+  {
+    "name": "South Shores/CSUDH Visual and Performing Arts",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "2060 West 35th St."
+  },
+  {
+    "name": "Stonehurst Avenue Elementary School Science, Technology, Engineering, Arts and Math Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "9851 Stonehurst Ave."
+  },
+  {
+    "name": "Sun Valley Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "7330 Bakman Ave."
+  },
+  {
+    "name": "Sunland Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "8350 Hillrose St."
+  },
+  {
+    "name": "Susan Miller Dorsey Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "3537 Farmdale Ave."
+  },
+  {
+    "name": "Sylmar Biotech Health and Engineering Magnet",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "13050 Borden Ave."
+  },
+  {
+    "name": "Sylmar Charter High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "13050 Borden Ave."
+  },
+  {
+    "name": "Taper Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1824 Taper Ave."
+  },
+  {
+    "name": "Teresa Hughes Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "4242 Clara St."
+  },
+  {
+    "name": "Thirty-Second Street USC Performing Arts",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "822 West 32nd St."
+  },
+  {
+    "name": "Thomas Starr King Middle School Film and Media Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "4201 Fountain Ave."
+  },
+  {
+    "name": "Tom Bradley Global Awareness Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "3875 Dublin Ave."
+  },
+  {
+    "name": "Ulysses S. Grant Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "13000 Oxnard St."
+  },
+  {
+    "name": "University Pathways Medical Magnet Academy",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "11227 South San Pedro St."
+  },
+  {
+    "name": "Valley Oaks Center for Enriched Studies",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "9171 Telfair Ave."
+  },
+  {
+    "name": "Van Nuys Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "5435 Vesper Ave."
+  },
+  {
+    "name": "Van Nuys Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "6535 Cedros Ave."
+  },
+  {
+    "name": "Vena Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "9377 Vena Ave."
+  },
+  {
+    "name": "Venice Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "13000 Venice Blvd."
+  },
+  {
+    "name": "Verdugo Hills Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "10625 Plainview Ave."
+  },
+  {
+    "name": "Vintage Math/Science/Technology Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "15848 Stare St."
+  },
+  {
+    "name": "Washington Irving Middle School Math, Music and Engineering Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "3010 Estara Ave."
+  },
+  {
+    "name": "Welby Way Charter Elementary School And Gifted-High Ability Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "23456 Welby Way"
+  },
+  {
+    "name": "WESM Health/Sports Medicine",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "7400 West Manchester Ave."
+  },
+  {
+    "name": "Western Avenue Technology Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1724 West 53rd St."
+  },
+  {
+    "name": "Westminster Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "1010 Abbott Kinney Blvd."
+  },
+  {
+    "name": "Westside Global Awareness Magnet",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "104 Anchorage St."
+  },
+  {
+    "name": "William Mulholland Middle",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "17120 Vanowen St."
+  },
+  {
+    "name": "Wilmington Middle Science, Technology, Engineering, Arts, Mathematics (STEAM) Magnet",
+    "low_grade": "6",
+    "magnet": true,
+    "address": "1700 Gulf Ave."
+  },
+  {
+    "name": "Windsor Hills Math Science",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "5215 Overdale Dr."
+  },
+  {
+    "name": "Wonderland Avenue Elementary",
+    "low_grade": "K",
+    "magnet": true,
+    "address": "8510 Wonderland Ave."
+  },
+  {
+    "name": "Woodrow Wilson Senior High",
+    "low_grade": "9",
+    "magnet": true,
+    "address": "4500 Multnomah St."
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "magnet-schools",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3000", "--directory", "/Users/hi/LAUSD MAGNET DATA/lausd_magnet_app/web"],
+      "port": 3000
+    }
+  ]
+}

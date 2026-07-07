@@ -1,0 +1,18 @@
+# Logs & temp
+update_schools.log
+*.tmp
+*.log
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Flutter build artifacts
+lausd_magnet_app/.dart_tool/
+lausd_magnet_app/build/
+
+# Local tooling
+.netlify/

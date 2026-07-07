@@ -1,0 +1,15 @@
+name: lausd_magnet_app
+description: LAUSD Magnet School Scores Viewer
+
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>STEM Pathfinder — Find the Right LAUSD Magnet School</title>
+  <meta name="description" content="STEM Pathfinder is a free tool from The STEM in Me that helps LA families find the right magnet school. Compare 180 LAUSD magnet schools scored on Quality, Access, and Equity — matched to your child in 3 questions.">
+
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="STEM Pathfinder — Find the Right LAUSD Magnet School">
+  <meta property="og:description" content="Match your child to the right STEM magnet school in Los Angeles in 3 quick questions. A free tool from The STEM in Me.">
+  <meta property="og:url"         content="https://stempathfinder.netlify.app">
+  <meta name="twitter:card"       content="summary">
+  <meta name="twitter:title"      content="STEM Pathfinder — Find the Right LAUSD Magnet School">
+  <meta name="twitter:description" content="Find the right STEM magnet school for your child in 3 questions. 180 LAUSD schools, free to use.">
+
+  <!-- Theme color for mobile browser chrome -->
+  <meta name="theme-color" content="#1565C0">
+
+  <!-- Leaflet map (loaded async — only needed when map tab opens) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+
+<!-- ── APPBAR ──────────────────────────── -->
+<header class="appbar" role="banner">
+  <div class="appbar-left">
+    <button class="home-btn" onclick="showHero()" aria-label="Go to home screen">🏠 Home</button>
+    <span class="appbar-title" aria-hidden="true">STEM Pathfinder <span class="appbar-sub">· by The STEM in Me</span></span>
+  </div>
+  <div class="appbar-right">
+    <span id="offline-pill" class="offline-pill" style="display:none" role="status" aria-live="polite">Using cached data</span>
+    <button class="nav-btn" onclick="scrollToBrowse()" aria-label="Browse all 180 schools">Browse all schools</button>
+  </div>
+</header>
+
+<!-- ── MAIN CONTENT ────────────────────── -->
+<main id="main-content" role="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero-section" aria-label="Welcome">
+    <p class="hero-eyebrow">A free tool from The STEM in Me</p>
+    <h1>Find the right <em>STEM school</em><br>for your child</h1>
+    <p class="hero-sub">Answer 3 quick questions and we'll match your child to the best magnet programs in Los Angeles.</p>
+    <button class="btn-start" onclick="startQuiz()">Get Started →</button>
+    <p class="hero-alt">Already know what you want? <a onclick="scrollToBrowse()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')scrollToBrowse()">Browse all 180 schools ↓</a></p>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="quiz-panel" id="quiz-panel" aria-label="School finder quiz" aria-live="polite">
+    <div class="quiz-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="quiz-progress-bar">
+      <div class="quiz-progress-fill" id="qpf"></div>
+    </div>
+    <div class="quiz-inner">
+      <div class="quiz-step-label">
+        <span id="step-label">Step 1 of 3</span>
+        <span id="step-pct">33%</span>
+      </div>
+      <div id="quiz-body"></div>
+      <div class="quiz-nav">
+        <button class="btn-back" id="btn-back" onclick="quizBack()" aria-label="Go back">← Back</button>
+        <button class="btn-next" id="btn-next" onclick="quizNext()" disabled aria-label="Next step">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-panel" id="results-panel" aria-label="School matches" aria-live="polite">
+    <div class="results-header">
+      <h2>🎯 Your top matches</h2>
+      <div class="results-sub" id="results-sub"></div>
+      <span class="match-pill" id="match-pill" role="status"></span>
+      <div class="results-actions">
+        <button class="btn-share" onclick="shareResults()" aria-label="Share these results">📤 Share results</button>
+      </div>
+    </div>
+    <div class="results-list" id="results-list" role="list"></div>
+    <div class="see-more-wrap" id="see-more-wrap" style="display:none">
+      <button class="see-more-btn" id="see-more-btn" onclick="showMore()"></button>
+    </div>
+    <div class="results-footer">
+      <button class="btn-restart" onclick="startQuiz()">↺ Start over</button>
+      <button class="link-btn" onclick="scrollToBrowse()">Browse all 180 schools →</button>
+    </div>
+  </section>
+
+  <!-- BROWSE -->
+  <section id="browse-section" style="display:none" aria-label="Browse all schools">
+    <div class="section-divider" id="browse-divider"><span>Browse schools</span></div>
+
+    <!-- Stats (collapsible) -->
+    <div class="stats-toggle">
+      <button class="stats-toggle-btn" onclick="toggleStats()" id="stats-toggle-btn"
+              aria-expanded="false" aria-controls="stats-bar">
+        ▸ Show district averages
+      </button>
+    </div>
+    <div class="stats-bar collapsed" id="stats-bar" role="region" aria-label="District statistics">
+      <div class="stat-card" id="stat-quality" onclick="sortBy('quality')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')sortBy('quality')" aria-label="Sort by quality">
+        <div class="stat-label">Avg Quality</div><div class="stat-value" id="avg-quality">—</div><div class="stat-sub">Program rigor</div>
+      </div>
+      <div class="stat-card" id="stat-access" onclick="sortBy('access')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')sortBy('access')" aria-label="Sort by access">
+        <div class="stat-label">Avg Access</div><div class="stat-value" id="avg-access">—</div><div class="stat-sub">Enrollment reach</div>
+      </div>
+      <div class="stat-card" id="stat-equity" onclick="sortBy('equity')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')sortBy('equity')" aria-label="Sort by equity">
+        <div class="stat-label">Avg Equity</div><div class="stat-value" id="avg-equity">—</div><div class="stat-sub">Underserved pop.</div>
+      </div>
+      <div class="stat-card" id="stat-overall" onclick="sortBy('overall')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')sortBy('overall')" aria-label="Sort by overall">
+        <div class="stat-label">Avg Overall</div><div class="stat-value" id="avg-overall">—</div><div class="stat-sub">Combined</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tab-bar" role="tablist" aria-label="View options">
+      <button class="tab-btn active" id="tab-list" role="tab" aria-selected="true"
+              onclick="switchTab('list')" aria-controls="list-panel">
+        📋 List
+      </button>
+      <button class="tab-btn" id="tab-map" role="tab" aria-selected="false"
+              onclick="switchTab('map')" aria-controls="map-panel">
+        🗺️ Map
+      </button>
+      <button class="tab-btn" id="tab-saved" role="tab" aria-selected="false"
+              onclick="switchTab('saved')" aria-controls="saved-panel">
+        ❤️ Saved
+        <span class="tab-badge" id="fav-badge" aria-label="saved schools count" style="display:none"></span>
+      </button>
+    </nav>
+
+    <!-- Filter bar (list only) -->
+    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter schools">
+      <label class="filter-lbl" for="search">Search</label>
+      <input id="search" type="search" placeholder="School name or address…"
+             oninput="applyFilters()" aria-label="Search schools" autocomplete="off">
+      <label class="filter-lbl" for="grade-filter">Grade</label>
+      <select id="grade-filter" onchange="applyFilters()" aria-label="Filter by grade">
+        <option value="">All grades</option>
+        <option value="K">K – Elementary</option>
+        <option value="1">Grade 1</option>
+        <option value="4">Grade 4</option>
+        <option value="6">Grade 6 – Middle</option>
+        <option value="7">Grade 7</option>
+        <option value="9">Grade 9 – High School</option>
+      </select>
+      <label class="filter-lbl" for="sort">Sort</label>
+      <select id="sort" onchange="applyFilters()" aria-label="Sort schools">
+        <option value="name">Name A–Z</option>
+        <option value="overall">Overall ↓</option>
+        <option value="quality">Quality ↓</option>
+        <option value="access">Access ↓</option>
+        <option value="equity">Equity ↓</option>
+      </select>
+      <button class="btn-clear" id="clear-btn" onclick="clearFilters()" aria-label="Clear all filters">
+        ✕ Clear <span class="fc-badge" id="fc-badge"></span>
+      </button>
+      <button class="info-btn" onclick="openModal()" aria-label="How scoring works">ⓘ Score guide</button>
+      <div class="legend" aria-hidden="true">
+        <span class="legend-item"><span class="dot" style="background:var(--green)"></span> 8–10</span>
+        <span class="legend-item"><span class="dot" style="background:var(--orange)"></span> 5–7</span>
+        <span class="legend-item"><span class="dot" style="background:var(--red)"></span> 1–4</span>
+      </div>
+    </div>
+
+    <div class="count-bar" id="count-bar"><span id="count-label" role="status" aria-live="polite"></span></div>
+
+    <!-- Tab panels -->
+    <div id="list-panel" role="tabpanel" aria-labelledby="tab-list" class="active">
+      <div id="list-content"></div>
+    </div>
+
+    <div id="map-panel" role="tabpanel" aria-labelledby="tab-map">
+      <div id="map-no-data" class="map-no-data" style="display:none">
+        <p>📍 Map data not yet loaded. Run <code>python3 geocode_schools.py</code> to enable the map.</p>
+      </div>
+      <div id="school-map" aria-label="Map of LAUSD magnet schools"></div>
+    </div>
+
+    <div id="saved-panel" role="tabpanel" aria-labelledby="tab-saved"></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about-section" aria-label="About The STEM in Me">
+    <div class="about-inner">
+      <h2>About The STEM in Me</h2>
+      <p>
+        The LAUSD magnet lottery is one of the best paths into strong STEM programs
+        for kids in Los Angeles — but the system is confusing, the deadlines are strict,
+        and the families who would benefit most often have no one to help them navigate it.
+      </p>
+      <p>
+        <strong>The STEM in Me</strong> exists to change that. <strong>STEM Pathfinder</strong>,
+        our free finder tool, covers all 180 LAUSD magnet schools so any parent can search,
+        compare, and find the right program for their child — no login, no cost, no catch.
+        During application season (November–February) we also help families complete their
+        applications in person.
+      </p>
+      <a class="about-contact" href="mailto:gottadanceitup@gmail.com">📧 Get in touch — workshops, volunteering, or questions</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── FOOTER ─────────────────────────── -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <strong>The STEM in Me</strong>
+      <span>Helping LA kids find their path into STEM.</span>
+    </div>
+    <div class="footer-links">
+      <a href="mailto:gottadanceitup@gmail.com">Contact</a>
+      <a href="https://www.lausd.net/Page/460" target="_blank" rel="noopener noreferrer">LAUSD Application</a>
+      <a onclick="openModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openModal()">How scores work</a>
+    </div>
+    <p class="footer-disclaimer">
+      The STEM in Me is an independent community project and is not affiliated with or endorsed by
+      the Los Angeles Unified School District. School directory data comes from the California
+      Department of Education. Scores are comparative estimates to help families explore options —
+      always visit schools and verify details before applying.
+    </p>
+    <p class="footer-copy">© 2026 The STEM in Me · Made with ❤️ in Los Angeles</p>
+  </div>
+</footer>
+
+<!-- ── SCORE GUIDE MODAL ──────────────── -->
+<div class="overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"
+     onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-title">📊 How schools are scored</h2>
+    <div class="modal-row">
+      <div class="modal-ico" aria-hidden="true">🎓</div>
+      <div class="modal-txt">
+        <strong>Quality (1–10)</strong>
+        <span>Program rigor and STEM focus. Specialized medical, engineering, and STEM magnets score highest.</span>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-ico" aria-hidden="true">🚪</div>
+      <div class="modal-txt">
+        <strong>Access (1–10)</strong>
+        <span>How broadly students can enroll. Schools starting at Kindergarten score highest.</span>
+      </div>
+    </div>
+    <div class="modal-row" style="margin-bottom:0">
+      <div class="modal-ico" aria-hidden="true">⚖️</div>
+      <div class="modal-txt">
+        <strong>Equity (1–10)</strong>
+        <span>Support for underserved communities. Schools in South LA, East LA, and Watts score highest.</span>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Got it</button>
+  </div>
+</div>
+
+<!-- ── CHATBOT ────────────────────────── -->
+<button class="chat-fab" onclick="toggleChat()" id="chat-fab"
+        aria-label="Open help chat" aria-expanded="false">
+  <span aria-hidden="true">💬</span> Help
+  <span class="fab-dot" aria-hidden="true"></span>
+</button>
+
+<div class="chat-window hidden" id="chat-window"
+     role="dialog" aria-modal="false" aria-label="School Helper chat" aria-hidden="true">
+  <div class="chat-header">
+    <div class="chat-avatar" aria-hidden="true">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">School Helper</div>
+      <div class="chat-header-status">Here to help LAUSD families</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+  <div class="chat-quick-replies" id="chat-qr" aria-label="Quick reply options"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" type="text"
+           placeholder="Ask me anything…"
+           onkeydown="if(event.key==='Enter')sendMsg()"
+           aria-label="Type a message" autocomplete="off">
+    <button class="chat-send" onclick="sendMsg()" id="chat-send" aria-label="Send message">↑</button>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ────────────────────────── -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="schools_data.js?v=20260706"></script>
+<script src="app.js?v=3"></script>
+<script src="quiz.js?v=3"></script>
+<script src="chat.js?v=3"></script>
+
+</body>
+</html>
