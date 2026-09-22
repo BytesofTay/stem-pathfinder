@@ -16,3 +16,6 @@ lausd_magnet_app/build/
 
 # Local tooling
 .netlify/
+.env
+.env.*
+!.env.example

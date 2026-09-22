@@ -96,3 +96,22 @@ python3 geocode_schools.py
 ## Built for
 
 A nonprofit helping underserved kids in Los Angeles access STEM programs they might not otherwise find. The magnet lottery system is complex and opaque — this tool makes it navigable for parents.
+
+## Screenshots and product notes
+
+The interactive experience lives in `lausd_magnet_app/web/`. When adding UI captures, place them in `docs/screenshots/` and embed them here with a short caption so reviewers can understand the quiz, ranked results, and map flow at a glance.
+
+## Safety and configuration
+
+Keep credentials in environment variables. Never commit `.env` files or API keys. The scoring service reads `ANTHROPIC_API_KEY` at runtime; use a local `.env` file or your deployment provider's secret store.
+
+## Roadmap
+
+- Add LLM orchestration around school evidence retrieval and score explanations.
+- Auto-fetch and normalize source data on a scheduled job with provenance tracking.
+- Move long-running scoring and geocoding work to async workers with retries and status updates.
+- Add fixture-backed API tests and browser-level checks for the quiz, saved schools, and share links.
+
+## CI
+
+GitHub Actions compiles the Python code and runs the smoke-test suite on every push and pull request.
