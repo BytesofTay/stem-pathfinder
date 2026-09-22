@@ -12,11 +12,17 @@ from typing import Optional
 import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 app = FastAPI(title="LAUSD Magnet School Scoring Engine")
 
-client = anthropic.AsyncAnthropic()
+client = None
+
+def get_client():
+    global client
+    if client is None:
+        client = anthropic.AsyncAnthropic()
+    return client
 
 SCHOOLS_FILE = Path(__file__).parent / "lausd_magnet_schools.json"
 
@@ -45,6 +51,12 @@ class School(BaseModel):
     address: str
 
 
+class Scores(BaseModel):
+    quality: int = Field(ge=1, le=10, strict=True)
+    access: int = Field(ge=1, le=10, strict=True)
+    equity: int = Field(ge=1, le=10, strict=True)
+
+
 class ScoredSchool(BaseModel):
     name: str
     low_grade: str
@@ -66,7 +78,7 @@ async def score_school(school: School) -> ScoredSchool:
     )
 
     try:
-        response = await client.messages.create(
+        response = await get_client().messages.create(
             model="claude-opus-4-6",
             max_tokens=256,
             thinking={"type": "adaptive"},
@@ -83,12 +95,12 @@ async def score_school(school: School) -> ScoredSchool:
         if not match:
             raise ValueError(f"No JSON found in response: {text!r}")
 
-        scores = json.loads(match.group())
+        scores = Scores.model_validate(json.loads(match.group()))
         return ScoredSchool(
             **school.model_dump(),
-            quality=int(scores["quality"]),
-            access=int(scores["access"]),
-            equity=int(scores["equity"]),
+            quality=scores.quality,
+            access=scores.access,
+            equity=scores.equity,
         )
 
     except Exception as exc:

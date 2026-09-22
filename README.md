@@ -115,3 +115,11 @@ Keep credentials in environment variables. Never commit `.env` files or API keys
 ## CI
 
 GitHub Actions compiles the Python code and runs the smoke-test suite on every push and pull request.
+
+## Architecture and evidence
+
+The Python API accepts school records and calls a language model with at most five concurrent requests per batch. Responses are validated as integer scores from 1 through 10; malformed or out-of-range results return a per-school error. The client is initialized only when scoring is requested, so tests and health checks do not require API credentials.
+
+Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, and out-of-range scores. They do not measure model accuracy.
+
+**Limitations:** these scores are experimental model outputs, not verified measures of school quality or equity. School name, address, and magnet status alone do not substantiate those conclusions. Source-backed evidence and evaluation are prerequisites for treating these scores as recommendations.
