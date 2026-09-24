@@ -120,8 +120,8 @@ const I18N = {
     aboutP2: '<strong>The STEM in Me</strong> exists to change that. <strong>STEM Pathfinder</strong>, our free finder tool, covers all 180 LAUSD magnet schools so any parent can search, compare, and find the right program for their child — no login, no cost, no catch. During application season (November–February) we also help families complete their applications in person.',
     aboutContact: '📧 Get in touch — workshops, volunteering, or questions',
     footerTagline: 'Helping LA kids find their path into STEM.',
-    footerContact: 'Contact', footerApply: 'LAUSD Application', footerScores: 'How scores work',
-    footerDisclaimer: 'The STEM in Me is an independent community project and is not affiliated with or endorsed by the Los Angeles Unified School District. School directory data comes from the California Department of Education. Scores are comparative estimates to help families explore options — always visit schools and verify details before applying.',
+    footerContact: 'Contact', footerApply: 'LAUSD Application', footerSource: 'CDE school data', footerScores: 'How scores work',
+    footerDisclaimer: 'The STEM in Me is an independent community project and is not affiliated with or endorsed by the Los Angeles Unified School District. School directory data comes from the California Department of Education. Scores are experimental estimates, not verified ratings — always visit schools and verify details before applying.',
     footerCopy: '© 2026 The STEM in Me · Made with ❤️ in Los Angeles',
   },
 
@@ -242,8 +242,8 @@ const I18N = {
     aboutP2: '<strong>The STEM in Me</strong> existe para cambiar eso. <strong>STEM Pathfinder</strong>, nuestra herramienta gratuita, cubre las 180 escuelas magnet de LAUSD para que cualquier padre pueda buscar, comparar y encontrar el programa ideal para su hijo — sin registro, sin costo, sin trucos. Durante la temporada de solicitudes (noviembre–febrero) también ayudamos a las familias a completar sus solicitudes en persona.',
     aboutContact: '📧 Contáctenos — talleres, voluntariado o preguntas',
     footerTagline: 'Ayudando a los niños de LA a encontrar su camino hacia STEM.',
-    footerContact: 'Contacto', footerApply: 'Solicitud LAUSD', footerScores: 'Cómo funcionan los puntajes',
-    footerDisclaimer: 'The STEM in Me es un proyecto comunitario independiente y no está afiliado ni respaldado por el Distrito Escolar Unificado de Los Ángeles. Los datos del directorio escolar provienen del Departamento de Educación de California. Los puntajes son estimaciones comparativas para ayudar a las familias a explorar opciones — siempre visite las escuelas y verifique los detalles antes de aplicar.',
+    footerContact: 'Contacto', footerApply: 'Solicitud LAUSD', footerSource: 'Datos escolares del CDE', footerScores: 'Cómo funcionan los puntajes',
+    footerDisclaimer: 'The STEM in Me es un proyecto comunitario independiente y no está afiliado ni respaldado por el Distrito Escolar Unificado de Los Ángeles. Los datos del directorio escolar provienen del Departamento de Educación de California. Los puntajes son estimaciones experimentales, no calificaciones verificadas — visite las escuelas y confirme los detalles antes de solicitar.',
     footerCopy: '© 2026 The STEM in Me · Hecho con ❤️ en Los Ángeles',
   }
 };
@@ -273,14 +273,6 @@ function applyStaticI18n() {
     if (!el) return;
     if (html) el.innerHTML = t(key); else el.textContent = t(key);
   };
-
-  const sourceNote = document.getElementById('source-freshness');
-  if (sourceNote) {
-    const refreshedAt = window.SCHOOL_DATA_SOURCE?.retrievedAt;
-    sourceNote.textContent = refreshedAt
-      ? ` ${t('sourceSnapshotKnown', { date: refreshedAt })}`
-      : ` ${t('sourceSnapshotUnknown')}`;
-  }
 
   // Language toggle shows the language you'd switch TO
   const langBtn = document.getElementById('lang-toggle');
@@ -365,12 +357,24 @@ function applyStaticI18n() {
 
   set('.footer-brand span', 'footerTagline');
   const fLinks = document.querySelectorAll('.footer-links a');
-  if (fLinks.length >= 3) {
+  if (fLinks.length >= 4) {
     fLinks[0].textContent = t('footerContact');
     fLinks[1].textContent = t('footerApply');
-    fLinks[2].textContent = t('footerScores');
+    fLinks[2].textContent = t('footerSource');
+    fLinks[3].textContent = t('footerScores');
   }
-  set('.footer-disclaimer', 'footerDisclaimer');
+  set('#footer-disclaimer-text', 'footerDisclaimer');
+  const sourceNote = document.getElementById('source-freshness');
+  if (sourceNote) {
+    // `schools_data.js` declares a top-level const, which is visible to later
+    // classic scripts but is not attached to `window`.
+    const refreshedAt = typeof SCHOOL_DATA_SOURCE !== 'undefined'
+      ? SCHOOL_DATA_SOURCE.retrievedAt
+      : null;
+    sourceNote.textContent = refreshedAt
+      ? ` ${t('sourceSnapshotKnown', { date: refreshedAt })}`
+      : ` ${t('sourceSnapshotUnknown')}`;
+  }
   set('.footer-copy', 'footerCopy');
 }
 

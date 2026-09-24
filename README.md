@@ -106,6 +106,8 @@ The interactive experience lives in `lausd_magnet_app/web/`. These captures show
 
 ![STEM Pathfinder grade selection](docs/screenshots/quiz.png)
 
+![STEM Pathfinder quiz results](docs/screenshots/quiz-results.png)
+
 For code review, start with `quiz.js` for matching and share links, `app.js` for browsing and saved schools, and `scoring_engine.py` for the separate scoring API.
 
 ## Safety and configuration
@@ -119,11 +121,10 @@ Keep credentials in environment variables. Never commit `.env` files or API keys
 - Add LLM orchestration around school evidence retrieval and score explanations.
 - Auto-fetch and normalize source data on a scheduled job with provenance tracking.
 - Move long-running scoring and geocoding work to async workers with retries and status updates.
-- Add browser-level checks for the quiz, saved schools, and share links.
 
 ## CI
 
-GitHub Actions compiles the Python code and runs the unit suite on every push and pull request.
+GitHub Actions runs the Python unit suite and a Chromium browser flow covering quiz results, share URLs, saved schools, refresh persistence, and the visible data snapshot date.
 
 ## Architecture and evidence
 
