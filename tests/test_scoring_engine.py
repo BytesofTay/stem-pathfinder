@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
-from scoring_engine import School, score_school
+from scoring_engine import School, ScoredSchool, health, score_school, score_schools
 
 class ScoringTests(unittest.IsolatedAsyncioTestCase):
     async def score(self, text):
@@ -23,3 +23,28 @@ class ScoringTests(unittest.IsolatedAsyncioTestCase):
         result = await self.score('No data available')
         self.assertIsNotNone(result.error)
         self.assertEqual(result.name,'Test School')
+
+    async def test_batch_keeps_input_order_and_isolates_failures(self):
+        schools = [
+            School(name='First', low_grade='K', magnet=True, address='One'),
+            School(name='Second', low_grade='6', magnet=True, address='Two'),
+        ]
+
+        async def fake_score(school):
+            if school.name == 'First':
+                return ScoredSchool(**school.model_dump(), quality=8, access=7, equity=6)
+            return ScoredSchool(**school.model_dump(), error='Provider unavailable')
+
+        with patch('scoring_engine.score_school', side_effect=fake_score):
+            results = await score_schools(schools)
+
+        self.assertEqual([result.name for result in results], ['First', 'Second'])
+        self.assertEqual(results[0].quality, 8)
+        self.assertEqual(results[1].error, 'Provider unavailable')
+        self.assertIsNone(results[1].quality)
+
+    async def test_empty_batch_and_health_do_not_initialize_provider(self):
+        with patch('scoring_engine.get_client') as provider:
+            self.assertEqual(await score_schools([]), [])
+            self.assertEqual((await health())['status'], 'ok')
+            provider.assert_not_called()
