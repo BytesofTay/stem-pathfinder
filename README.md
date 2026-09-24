@@ -2,7 +2,7 @@
 
 A prototype that helps families in Los Angeles browse and compare magnet schools with STEM-related interests. It is part of **The STEM in Me** project.
 
-**Demo URL:** https://stempathfinder.netlify.app (deployment availability has not been verified in this repository)
+**Demo:** https://stempathfinder.netlify.app — the home page and quiz-to-results path were opened on September 23, 2026. This check did not validate school data or score accuracy.
 
 ---
 
@@ -67,11 +67,11 @@ Open http://localhost:3000
 
 ## How scores work
 
-Each school is scored by Claude claude-opus-4-6 on three dimensions:
+The scoring API prompts Claude claude-opus-4-6 to assign three 1–10 values from limited school fields:
 
-- **Quality (1–10)** — Program rigor and STEM focus. Specialized medical, engineering, and science magnets score highest.
-- **Access (1–10)** — How broadly students can enroll. Schools starting at Kindergarten score highest; high schools score lower.
-- **Equity (1–10)** — Support for underserved communities. Schools in South LA, East LA, and Watts score highest.
+- **Quality** — a model estimate of program focus, without direct evidence of instructional quality.
+- **Access** — a model estimate influenced by starting grade; it does not establish admissions eligibility.
+- **Equity** — a model estimate without verified enrollment or student-support data.
 
 The **Overall** score is the average of all three.
 
@@ -100,7 +100,13 @@ The project explores how to make a complex school-selection process easier to br
 
 ## Screenshots and product notes
 
-The interactive experience lives in `lausd_magnet_app/web/`. Screenshots have not yet been captured and verified. The quickest code review path is `quiz.js` for matching and share links, `app.js` for browsing and saved schools, and `scoring_engine.py` for the separate scoring API.
+The interactive experience lives in `lausd_magnet_app/web/`. These captures show the live home and first quiz step on September 23, 2026:
+
+![STEM Pathfinder home screen](docs/screenshots/home.png)
+
+![STEM Pathfinder grade selection](docs/screenshots/quiz.png)
+
+For code review, start with `quiz.js` for matching and share links, `app.js` for browsing and saved schools, and `scoring_engine.py` for the separate scoring API.
 
 ## Safety and configuration
 
