@@ -1,17 +1,17 @@
 # STEM Pathfinder
 
-A parent-facing tool that helps families in Los Angeles find and compare the right STEM magnet school for their child — built by **The STEM in Me**, a nonprofit focused on getting underserved kids into STEM programs.
+A prototype that helps families in Los Angeles browse and compare magnet schools with STEM-related interests. It is part of **The STEM in Me** project.
 
-**Live site:** https://stempathfinder.netlify.app
+**Demo URL:** https://stempathfinder.netlify.app (deployment availability has not been verified in this repository)
 
 ---
 
 ## What it does
 
 - **3-step quiz** — grade level → interests → priority → ranked matches
-- **AI-powered scoring** — each of 180 schools scored by Claude (Anthropic) on Quality, Access, and Equity
+- **Experimental model scores** — the bundled dataset contains 180 schools with generated Quality, Access, and Equity scores; these are not verified school evaluations
 - **Interactive map** — all 180 schools pinned on a map, color-coded by score
-- **Saved schools** — heart any school to save it; persists across sessions
+- **Saved schools** — save schools in the current browser's local storage
 - **Share results** — quiz results encode into a URL for sharing with a partner or friend
 - **Rule-based chatbot** — answers common questions and navigates parents around the site without any API calls
 
@@ -25,7 +25,7 @@ A parent-facing tool that helps families in Los Angeles find and compare the rig
 | Map | [Leaflet.js](https://leafletjs.com/) + OpenStreetMap tiles |
 | Scoring API | FastAPI + [Claude claude-opus-4-6](https://anthropic.com) (async, semaphore-limited) |
 | Geocoding | US Census Bureau Geocoder (free, no API key) |
-| Deployment | Netlify (static, drag-and-drop) |
+| Deployment | Static files; the demo URL points to Netlify |
 
 ---
 
@@ -54,9 +54,10 @@ geocode_schools.py — Geocodes school addresses (Census Bureau API)
 cd lausd_magnet_app/web
 python3 -m http.server 3000
 
-# Optional: run the live scoring API
-export ANTHROPIC_API_KEY="sk-ant-..."
+# Optional: run the scoring API after installing requirements
 cd ../..
+python3 -m pip install -r requirements.txt
+export ANTHROPIC_API_KEY="your-key"
 python3 scoring_engine.py
 ```
 
@@ -79,7 +80,7 @@ The **Overall** score is the average of all three.
 ## Regenerating scores
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+export ANTHROPIC_API_KEY="your-key"
 python3 scoring_engine.py
 # Then hit: POST http://localhost:8000/score/file
 ```
@@ -95,11 +96,11 @@ python3 geocode_schools.py
 
 ## Built for
 
-A nonprofit helping underserved kids in Los Angeles access STEM programs they might not otherwise find. The magnet lottery system is complex and opaque — this tool makes it navigable for parents.
+The project explores how to make a complex school-selection process easier to browse. Families should verify school details, eligibility, application dates, and program fit with LAUSD before making decisions.
 
 ## Screenshots and product notes
 
-The interactive experience lives in `lausd_magnet_app/web/`. When adding UI captures, place them in `docs/screenshots/` and embed them here with a short caption so reviewers can understand the quiz, ranked results, and map flow at a glance.
+The interactive experience lives in `lausd_magnet_app/web/`. Screenshots have not yet been captured and verified. The quickest code review path is `quiz.js` for matching and share links, `app.js` for browsing and saved schools, and `scoring_engine.py` for the separate scoring API.
 
 ## Safety and configuration
 
@@ -114,12 +115,12 @@ Keep credentials in environment variables. Never commit `.env` files or API keys
 
 ## CI
 
-GitHub Actions compiles the Python code and runs the smoke-test suite on every push and pull request.
+GitHub Actions compiles the Python code and runs the unit suite on every push and pull request.
 
 ## Architecture and evidence
 
 The Python API accepts school records and calls a language model with at most five concurrent requests per batch. Responses are validated as integer scores from 1 through 10; malformed or out-of-range results return a per-school error. The client is initialized only when scoring is requested, so tests and health checks do not require API credentials.
 
-Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, and out-of-range scores. They do not measure model accuracy.
+Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, out-of-range scores, batch order, per-school failures, and credential-free health checks. They do not measure model accuracy or test the browser flow.
 
 **Limitations:** these scores are experimental model outputs, not verified measures of school quality or equity. School name, address, and magnet status alone do not substantiate those conclusions. Source-backed evidence and evaluation are prerequisites for treating these scores as recommendations.
