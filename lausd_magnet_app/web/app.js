@@ -8,8 +8,6 @@ const HIGH_GRADE = { K:'5','1':'5','4':'5','6':'8','7':'8','9':'12' };
 const FAV_KEY    = 'lausd_favorites';
 
 let allSchools   = [];
-let topRatedIds  = new Set();
-let topEquityIds = new Set();
 let favorites    = new Set();
 let mapInstance  = null;
 let currentTab   = 'list';
@@ -206,9 +204,6 @@ function initMap() {
 function renderCard(s, idx) {
   const ov  = overall(s);
   const p   = getProg(s.name);
-  const ribbons = [];
-  if (topRatedIds.has(s.name))  ribbons.push(`<div class="ribbon" aria-label="Top Rated">${t('topRated')}</div>`);
-  if (topEquityIds.has(s.name)) ribbons.push(`<div class="ribbon eq" aria-label="High Equity">${t('highEquity')}</div>`);
   const badge = p ? `<span class="prog-badge" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">${p.label}</span>` : '';
   const oc    = ov != null ? scCls(ov) : '';
   const circ  = ov != null
@@ -220,7 +215,6 @@ function renderCard(s, idx) {
   const favActive = favorites.has(s.name);
 
   return `<div class="card" style="animation-delay:${Math.min(idx,20)*28}ms" data-school="${s.name.replace(/"/g,'&quot;')}">
-    ${ribbons.join('')}
     <div class="card-header">
       <div class="card-main">
         <div class="card-name">${s.name}</div>
@@ -260,17 +254,6 @@ function updateStats(schools) {
   const avgOv = (sc.reduce((a,s) => a + overall(s), 0) / sc.length).toFixed(1);
   ['quality','access','equity'].forEach(k => document.getElementById('avg-' + k).textContent = avg(k));
   document.getElementById('avg-overall').textContent = avgOv;
-}
-
-function computeRibbons(schools) {
-  const sc = [...schools].filter(s => s.quality != null);
-  topRatedIds  = new Set(sc.sort((a,b) => overall(b) - overall(a)).slice(0, 10).map(s => s.name));
-  topEquityIds = new Set(
-    [...schools].filter(s => s.quality != null)
-      .sort((a,b) => b.equity - a.equity).slice(0, 5)
-      .map(s => s.name)
-      .filter(n => !topRatedIds.has(n))
-  );
 }
 
 function activeFC() {
@@ -354,7 +337,6 @@ async function loadSchools() {
     allSchools = SCHOOLS_DATA;
     show('offline-pill', 'flex');
   }
-  computeRibbons(allSchools);
   updateStats(allSchools);
   applyFilters();
 }

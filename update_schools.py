@@ -11,6 +11,7 @@ Run by cron:   see update_schools.sh
 """
 import csv
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -42,7 +43,7 @@ def curl(url, timeout=120):
     return result.stdout
 
 def find_latest_dataset_csv():
-    """Ask the CKAN portal for the newest california-public-schools-YYYY-YY dataset."""
+    """Return the newest CDE school-directory dataset name and CSV URL."""
     data = json.loads(curl(CKAN_SEARCH))
     candidates = []
     for pkg in data.get('result', {}).get('results', []):
@@ -56,12 +57,12 @@ def find_latest_dataset_csv():
         raise RuntimeError('No california-public-schools dataset with a CSV found on data.ca.gov')
     name, url = max(candidates)  # names sort by year: ...-2024-25 < ...-2025-26
     log(f'Latest dataset: {name}')
-    return url
+    return name, url
 
 def fetch_cde_magnets():
     """Download the current school year's directory; return active LAUSD magnets."""
     log('Finding latest CDE dataset on data.ca.gov…')
-    csv_url = find_latest_dataset_csv()
+    dataset_name, csv_url = find_latest_dataset_csv()
     log('Downloading school directory CSV…')
     text = curl(csv_url, timeout=180).decode('utf-8-sig', errors='replace')
     rows = list(csv.DictReader(text.splitlines()))
@@ -74,7 +75,7 @@ def fetch_cde_magnets():
         # A collapsed count means CDE changed their format or the filter broke —
         # bail rather than gutting the live site's data.
         raise RuntimeError(f'Only {len(magnets)} magnets found; refusing to update (sanity check)')
-    return magnets
+    return magnets, dataset_name
 
 def low_grade_of(grade):
     """'KG' -> 'K', '09' -> '9', '01' -> '1'."""
@@ -100,7 +101,9 @@ def to_school(r):
 def load_existing():
     content = JS_FILE.read_text().strip()
     json_str = content[content.index('['):content.rindex(']') + 1]
-    return json.loads(json_str)
+    metadata_match = re.search(r'const SCHOOL_DATA_SOURCE = (\{[^\n]+\});', content)
+    metadata = json.loads(metadata_match.group(1)) if metadata_match else {}
+    return json.loads(json_str), metadata
 
 def merge(existing, cde_schools):
     """CDE is the source of truth for the roster; existing data keeps its scores."""
@@ -125,7 +128,6 @@ def bump_cache_version():
     """Point index.html at the fresh data file so browsers don't serve stale JS."""
     stamp = date.today().strftime('%Y%m%d')
     html = HTML_FILE.read_text()
-    import re
     html = re.sub(r'schools_data\.js\?v=[^"]*', f'schools_data.js?v={stamp}', html)
     HTML_FILE.write_text(html)
 
@@ -140,11 +142,16 @@ def deploy():
     log('Deploy complete: https://stempathfinder.netlify.app')
 
 def main():
-    cde = fetch_cde_magnets()
-    existing = load_existing()
+    cde, dataset_name = fetch_cde_magnets()
+    existing, old_metadata = load_existing()
     merged, added, removed = merge(existing, [to_school(r) for r in cde])
+    metadata = {
+        'source': 'California Department of Education public school directory',
+        'dataset': dataset_name,
+        'retrievedAt': date.today().isoformat(),
+    }
 
-    if not added and not removed and merged == existing:
+    if not added and not removed and merged == existing and metadata['dataset'] == old_metadata.get('dataset'):
         log('No changes — site already up to date.')
         return
 
@@ -153,7 +160,10 @@ def main():
     if not added and not removed:
         log('School details changed (addresses/grades/coordinates)')
 
-    JS_FILE.write_text('const SCHOOLS_DATA = ' + json.dumps(merged, separators=(',', ':')) + ';\n')
+    JS_FILE.write_text(
+        'const SCHOOL_DATA_SOURCE = ' + json.dumps(metadata, separators=(',', ':')) + ';\n'
+        + 'const SCHOOLS_DATA = ' + json.dumps(merged, separators=(',', ':')) + ';\n'
+    )
     bump_cache_version()
     log(f'schools_data.js updated: {len(merged)} schools '
         f'({len(added)} added, {len(removed)} removed)')

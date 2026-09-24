@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>STEM Pathfinder — Find the Right LAUSD Magnet School</title>
-  <meta name="description" content="STEM Pathfinder is a free tool from The STEM in Me that helps LA families find the right magnet school. Compare 180 LAUSD magnet schools scored on Quality, Access, and Equity — matched to your child in 3 questions.">
+  <meta name="description" content="Explore LAUSD magnet schools by grade, interests, and program focus. STEM Pathfinder organizes school-directory information and experimental estimates to help families compare options.">
 
   <!-- Open Graph / Social sharing -->
   <meta property="og:type"        content="website">
@@ -47,7 +47,7 @@
   <section class="hero" id="hero-section" aria-label="Welcome">
     <p class="hero-eyebrow">A free tool from The STEM in Me</p>
     <h1>Find the right <em>STEM school</em><br>for your child</h1>
-    <p class="hero-sub">Answer 3 quick questions and we'll match your child to the best magnet programs in Los Angeles.</p>
+    <p class="hero-sub">Answer 3 quick questions to explore LAUSD magnet programs that may fit your child’s grade and interests.</p>
     <button class="btn-start" onclick="startQuiz()">Get Started →</button>
     <p class="hero-alt">Already know what you want? <a onclick="scrollToBrowse()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')scrollToBrowse()">Browse all 180 schools ↓</a></p>
   </section>
@@ -216,13 +216,14 @@
     <div class="footer-links">
       <a href="mailto:gottadanceitup@gmail.com">Contact</a>
       <a href="https://www.lausd.net/Page/460" target="_blank" rel="noopener noreferrer">LAUSD Application</a>
+      <a href="https://data.ca.gov/api/3/action/package_search?q=california-public-schools" target="_blank" rel="noopener noreferrer">CDE school data</a>
       <a onclick="openModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openModal()">How scores work</a>
     </div>
     <p class="footer-disclaimer">
       The STEM in Me is an independent community project and is not affiliated with or endorsed by
       the Los Angeles Unified School District. School directory data comes from the California
       Department of Education. Scores are comparative estimates to help families explore options —
-      always visit schools and verify details before applying.
+      always visit schools and verify details before applying. <span id="source-freshness"></span>
     </p>
     <p class="footer-copy">© 2026 The STEM in Me · Made with ❤️ in Los Angeles</p>
   </div>
@@ -237,21 +238,21 @@
       <div class="modal-ico" aria-hidden="true">🎓</div>
       <div class="modal-txt">
         <strong>Quality (1–10)</strong>
-        <span>Program rigor and STEM focus. Specialized medical, engineering, and STEM magnets score highest.</span>
+        <span>Experimental estimate based on available school-directory fields. It is not a verified measure of program quality.</span>
       </div>
     </div>
     <div class="modal-row">
       <div class="modal-ico" aria-hidden="true">🚪</div>
       <div class="modal-txt">
         <strong>Access (1–10)</strong>
-        <span>How broadly students can enroll. Schools starting at Kindergarten score highest.</span>
+        <span>Experimental estimate based on listed grade ranges. Confirm eligibility and application details with the school.</span>
       </div>
     </div>
     <div class="modal-row" style="margin-bottom:0">
       <div class="modal-ico" aria-hidden="true">⚖️</div>
       <div class="modal-txt">
         <strong>Equity (1–10)</strong>
-        <span>Support for underserved communities. Schools in South LA, East LA, and Watts score highest.</span>
+        <span>Experimental estimate only. It does not measure inclusion, student support, or school-level equity outcomes.</span>
       </div>
     </div>
     <button class="modal-close" onclick="closeModal()">Got it</button>

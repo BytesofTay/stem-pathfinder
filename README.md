@@ -9,7 +9,7 @@ A prototype that helps families in Los Angeles browse and compare magnet schools
 ## What it does
 
 - **3-step quiz** — grade level → interests → priority → ranked matches
-- **Experimental model scores** — the bundled dataset contains 180 schools with generated Quality, Access, and Equity scores; these are not verified school evaluations
+- **Experimental comparison estimates** — the bundled dataset contains 180 schools with heuristic Quality, Access, and Equity values; these are not official or validated evaluations
 - **Interactive map** — all 180 schools pinned on a map, color-coded by score
 - **Saved schools** — save schools in the current browser's local storage
 - **Share results** — quiz results encode into a URL for sharing with a partner or friend
@@ -110,6 +110,8 @@ For code review, start with `quiz.js` for matching and share links, `app.js` for
 
 ## Safety and configuration
 
+See [DATA_PROVENANCE.md](DATA_PROVENANCE.md) for the school-directory source, snapshot limitations, and score interpretation. The client-side Quality, Access, and Equity values are experimental heuristics, not official or validated ratings.
+
 Keep credentials in environment variables. Never commit `.env` files or API keys. The scoring service reads `ANTHROPIC_API_KEY` at runtime; use a local `.env` file or your deployment provider's secret store.
 
 ## Roadmap
@@ -117,7 +119,7 @@ Keep credentials in environment variables. Never commit `.env` files or API keys
 - Add LLM orchestration around school evidence retrieval and score explanations.
 - Auto-fetch and normalize source data on a scheduled job with provenance tracking.
 - Move long-running scoring and geocoding work to async workers with retries and status updates.
-- Add fixture-backed API tests and browser-level checks for the quiz, saved schools, and share links.
+- Add browser-level checks for the quiz, saved schools, and share links.
 
 ## CI
 
@@ -129,4 +131,4 @@ The Python API accepts school records and calls a language model with at most fi
 
 Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, out-of-range scores, batch order, per-school failures, and credential-free health checks. They do not measure model accuracy or test the browser flow.
 
-**Limitations:** these scores are experimental model outputs, not verified measures of school quality or equity. School name, address, and magnet status alone do not substantiate those conclusions. Source-backed evidence and evaluation are prerequisites for treating these scores as recommendations.
+**Limitations:** the client-side scores are experimental heuristics, not verified measures of school quality or equity. School name, address, and magnet status alone do not substantiate those conclusions. Program-focus badges are inferred from school names. The app uses scores only as sorting aids, not recommendations. The separate scoring API returns language-model outputs that have not been evaluated. See [DATA_PROVENANCE.md](DATA_PROVENANCE.md).

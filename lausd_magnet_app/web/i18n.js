@@ -8,11 +8,13 @@ const I18N = {
     home: '🏠 Home',
     browseAll: 'Browse all schools',
     cachedData: 'Using cached data',
+    sourceSnapshotKnown: 'Directory snapshot: {date}.',
+    sourceSnapshotUnknown: 'Directory snapshot date is not recorded.',
 
     /* Hero */
     heroEyebrow: 'A free tool from The STEM in Me',
     heroTitle: 'Find the right <em>STEM school</em><br>for your child',
-    heroSub: "Answer 3 quick questions and we'll match your child to the best magnet programs in Los Angeles.",
+    heroSub: "Answer 3 quick questions to explore LAUSD magnet programs that may fit your child's grade and interests.",
     getStarted: 'Get Started →',
     heroAlt: 'Already know what you want?',
     heroAltLink: 'Browse all 180 schools ↓',
@@ -34,12 +36,12 @@ const I18N = {
     q2optMedical: 'Medicine & Health', q2subMedical: 'Biotech, pre-med, health sciences',
     q2optEngineer: 'Engineering & Building', q2subEngineer: 'Aerospace, architecture, math',
     q2optArts: 'Art + STEM', q2subArts: 'Design, film, creative technology',
-    q2optAny: 'Not sure yet', q2subAny: 'Show me the best STEM programs',
+    q2optAny: 'Not sure yet', q2subAny: 'Show me programs across STEM interests',
     q3: 'What matters most to you?',
     q3hint: "We'll use this to rank your matches.",
-    q3optQuality: 'Best academic program', q3subQuality: 'Highest-rated STEM curriculum',
-    q3optAccess: 'Accessible to more kids', q3subAccess: 'Accepts from earlier grade levels',
-    q3optEquity: 'Welcoming to all students', q3subEquity: 'Strong diversity & inclusion',
+    q3optQuality: 'Program focus', q3subQuality: 'Sort by an experimental program estimate',
+    q3optAccess: 'Listed grade range', q3subAccess: 'Sort by an estimate based on listed grades',
+    q3optEquity: 'Community context', q3subEquity: 'Sort by an experimental demographic estimate',
 
     /* Results */
     topMatches: '🎯 Your top matches',
@@ -57,14 +59,8 @@ const I18N = {
     intEngineer: 'Engineering & Building', intArts: 'Art + STEM', intAny: 'All STEM programs',
 
     /* Why blurbs */
-    whyTop: '⭐ <strong>Top 10 school district-wide</strong> — one of the highest-rated magnet programs in LAUSD.',
-    whyMedical: '🏥 <strong>Top-rated medical magnet</strong> — specialized pre-med and biotech curriculum.',
-    whyStem: "🔬 <strong>One of LAUSD's highest-rated STEM programs</strong> — rigorous science and engineering curriculum.",
-    whyEquity: '⚖️ <strong>Strong community school</strong> — deeply committed to serving underserved neighborhoods in LA.',
-    whyK: '🏫 <strong>Starts in Kindergarten</strong> — your child can grow with this program from day one. Apply early!',
-    whyInclusive: '✨ <strong>High quality & inclusive</strong> — strong academics in a diverse, welcoming environment.',
-    whyProgram: '{icon} <strong>Strong {prog} program</strong> — serving {grades} with a specialized curriculum.',
-    whySolid: '🎓 <strong>Solid magnet program</strong> — serving {grades} with an overall score of {score}/10.',
+    whyProgram: '{icon} <strong>{prog} program</strong> — listed as serving {grades}. Confirm current details with the school.',
+    whySolid: '🎓 Listed as serving {grades}. Experimental comparison estimate: {score}/10; not a verified quality rating.',
 
     /* Browse */
     browseSchools: 'Browse schools',
@@ -103,11 +99,11 @@ const I18N = {
     /* Modal */
     modalTitle: '📊 How schools are scored',
     modalQuality: 'Quality (1–10)',
-    modalQualityTxt: 'Program rigor and STEM focus. Specialized medical, engineering, and STEM magnets score highest.',
+    modalQualityTxt: 'Experimental estimate based on available school-directory fields. It is not a verified measure of program quality.',
     modalAccess: 'Access (1–10)',
-    modalAccessTxt: 'How broadly students can enroll. Schools starting at Kindergarten score highest.',
+    modalAccessTxt: 'Experimental estimate based on listed grade ranges. Confirm eligibility and application details with the school.',
     modalEquity: 'Equity (1–10)',
-    modalEquityTxt: 'Support for underserved communities. Schools in South LA, East LA, and Watts score highest.',
+    modalEquityTxt: 'Experimental estimate only. It does not measure inclusion, student support, or school-level equity outcomes.',
     gotIt: 'Got it',
 
     /* Chat */
@@ -134,11 +130,13 @@ const I18N = {
     home: '🏠 Inicio',
     browseAll: 'Ver todas las escuelas',
     cachedData: 'Usando datos guardados',
+    sourceSnapshotKnown: 'Copia del directorio: {date}.',
+    sourceSnapshotUnknown: 'No se registró la fecha de la copia del directorio.',
 
     /* Hero */
     heroEyebrow: 'Una herramienta gratuita de The STEM in Me',
     heroTitle: 'Encuentre la <em>escuela STEM</em><br>ideal para su hijo',
-    heroSub: 'Responda 3 preguntas rápidas y encontraremos los mejores programas magnet de Los Ángeles para su hijo.',
+    heroSub: 'Responda 3 preguntas para explorar programas magnet de LAUSD que podrían coincidir con el grado e intereses de su hijo.',
     getStarted: 'Comenzar →',
     heroAlt: '¿Ya sabe lo que busca?',
     heroAltLink: 'Ver las 180 escuelas ↓',
@@ -160,12 +158,12 @@ const I18N = {
     q2optMedical: 'Medicina y Salud', q2subMedical: 'Biotecnología, pre-medicina, ciencias de la salud',
     q2optEngineer: 'Ingeniería y Construcción', q2subEngineer: 'Aeroespacial, arquitectura, matemáticas',
     q2optArts: 'Arte + STEM', q2subArts: 'Diseño, cine, tecnología creativa',
-    q2optAny: 'Aún no sé', q2subAny: 'Muéstrame los mejores programas STEM',
+    q2optAny: 'Aún no sé', q2subAny: 'Muéstrame programas de distintas áreas STEM',
     q3: '¿Qué es lo más importante para usted?',
     q3hint: 'Lo usaremos para ordenar sus resultados.',
-    q3optQuality: 'El mejor programa académico', q3subQuality: 'Currículo STEM mejor calificado',
-    q3optAccess: 'Accesible para más niños', q3subAccess: 'Acepta desde grados más tempranos',
-    q3optEquity: 'Acogedora para todos', q3subEquity: 'Fuerte diversidad e inclusión',
+    q3optQuality: 'Enfoque del programa', q3subQuality: 'Ordenar por una estimación experimental del programa',
+    q3optAccess: 'Grados publicados', q3subAccess: 'Ordenar según una estimación basada en los grados listados',
+    q3optEquity: 'Contexto comunitario', q3subEquity: 'Ordenar por una estimación demográfica experimental',
 
     /* Results */
     topMatches: '🎯 Sus mejores opciones',
@@ -183,14 +181,8 @@ const I18N = {
     intEngineer: 'Ingeniería y Construcción', intArts: 'Arte + STEM', intAny: 'Todos los programas STEM',
 
     /* Why blurbs */
-    whyTop: '⭐ <strong>Entre las 10 mejores del distrito</strong> — uno de los programas magnet mejor calificados de LAUSD.',
-    whyMedical: '🏥 <strong>Magnet médico de primer nivel</strong> — currículo especializado en pre-medicina y biotecnología.',
-    whyStem: '🔬 <strong>Uno de los mejores programas STEM de LAUSD</strong> — currículo riguroso de ciencia e ingeniería.',
-    whyEquity: '⚖️ <strong>Escuela comunitaria fuerte</strong> — profundamente comprometida con los vecindarios menos favorecidos de LA.',
-    whyK: '🏫 <strong>Empieza en Kínder</strong> — su hijo puede crecer con este programa desde el primer día. ¡Aplique temprano!',
-    whyInclusive: '✨ <strong>Alta calidad e inclusiva</strong> — excelencia académica en un ambiente diverso y acogedor.',
-    whyProgram: '{icon} <strong>Programa fuerte de {prog}</strong> — sirve {grades} con un currículo especializado.',
-    whySolid: '🎓 <strong>Programa magnet sólido</strong> — sirve {grades} con una calificación general de {score}/10.',
+    whyProgram: '{icon} <strong>Programa de {prog}</strong> — figura para {grades}. Confirme los detalles actuales con la escuela.',
+    whySolid: 'Figura para {grades}. Estimación experimental de comparación: {score}/10; no es una calificación de calidad verificada.',
 
     /* Browse */
     browseSchools: 'Explorar escuelas',
@@ -229,11 +221,11 @@ const I18N = {
     /* Modal */
     modalTitle: '📊 Cómo se califican las escuelas',
     modalQuality: 'Calidad (1–10)',
-    modalQualityTxt: 'Rigor del programa y enfoque STEM. Los magnets especializados en medicina, ingeniería y STEM obtienen los puntajes más altos.',
+    modalQualityTxt: 'Estimación experimental basada en campos disponibles del directorio escolar. No es una medida verificada de calidad.',
     modalAccess: 'Acceso (1–10)',
-    modalAccessTxt: 'Qué tan ampliamente pueden inscribirse los estudiantes. Las escuelas que empiezan en Kínder obtienen los puntajes más altos.',
+    modalAccessTxt: 'Estimación experimental basada en los grados publicados. Confirme la elegibilidad y los detalles de solicitud con la escuela.',
     modalEquity: 'Equidad (1–10)',
-    modalEquityTxt: 'Apoyo a comunidades menos favorecidas. Las escuelas del Sur de LA, Este de LA y Watts obtienen los puntajes más altos.',
+    modalEquityTxt: 'Solo es una estimación experimental. No mide inclusión, apoyo estudiantil ni resultados de equidad escolar.',
     gotIt: 'Entendido',
 
     /* Chat */
@@ -281,6 +273,14 @@ function applyStaticI18n() {
     if (!el) return;
     if (html) el.innerHTML = t(key); else el.textContent = t(key);
   };
+
+  const sourceNote = document.getElementById('source-freshness');
+  if (sourceNote) {
+    const refreshedAt = window.SCHOOL_DATA_SOURCE?.retrievedAt;
+    sourceNote.textContent = refreshedAt
+      ? ` ${t('sourceSnapshotKnown', { date: refreshedAt })}`
+      : ` ${t('sourceSnapshotUnknown')}`;
+  }
 
   // Language toggle shows the language you'd switch TO
   const langBtn = document.getElementById('lang-toggle');

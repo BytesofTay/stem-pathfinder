@@ -129,13 +129,7 @@ function matchSchools(gradeKey, interests, sortKey) {
 
 function whyBlurb(s) {
   const ov = overall(s);
-  if (topRatedIds.has(s.name)) return t('whyTop');
   const p = getProg(s.name);
-  if (p?.label.includes('Medical') && s.quality >= 8) return t('whyMedical');
-  if (p?.label.includes('STEM') && s.quality >= 9) return t('whyStem');
-  if (s.equity >= 9) return t('whyEquity');
-  if (s.access === 9) return t('whyK');
-  if (s.quality >= 8 && s.equity >= 7) return t('whyInclusive');
   if (p)
     return t('whyProgram', {
       icon: p.label.split(' ')[0],
@@ -175,7 +169,6 @@ function showResults() {
 
 function resultCardHtml(s, i) {
   const ov  = overall(s);
-  const top = topRatedIds.has(s.name);
   const p   = getProg(s.name);
   const cls = ov != null ? scCls(ov) : 'mid';
   const badge = p
@@ -186,9 +179,9 @@ function resultCardHtml(s, i) {
     <span class="score-chip" style="background:var(--${scCls(s.access)}-bg);border-color:var(--${scCls(s.access)}-bd);color:var(--${scCls(s.access)})">${t('access')} ${s.access}/10</span>
     <span class="score-chip" style="background:var(--${scCls(s.equity)}-bg);border-color:var(--${scCls(s.equity)}-bd);color:var(--${scCls(s.equity)})">${t('equity')} ${s.equity}/10</span>` : '';
   const favActive = favorites.has(s.name);
-  return `<div class="rcard ${top ? 'top' : ''}" style="animation-delay:${i * 55}ms">
+  return `<div class="rcard" style="animation-delay:${i * 55}ms">
     <div class="rcard-inner">
-      <div class="rcard-num ${top ? 'top' : ''}" aria-label="Rank ${i+1}">${i + 1}</div>
+      <div class="rcard-num" aria-label="Result ${i+1}">${i + 1}</div>
       <div class="rcard-body">
         <div class="rcard-name">${s.name}</div>
         <div class="rcard-meta">
