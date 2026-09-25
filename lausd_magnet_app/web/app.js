@@ -2,15 +2,17 @@
    LAUSD Magnet School Finder — Main App
    ========================================= */
 
-const API_URL   = 'http://localhost:8000/schools';
 const APPLY_URL = 'https://www.lausd.net/Page/460';
 const HIGH_GRADE = { K:'5','1':'5','4':'5','6':'8','7':'8','9':'12' };
 const FAV_KEY    = 'lausd_favorites';
+const FAV_MIGRATED_KEY = 'lausd_favorites_server_migrated';
+const FAV_PENDING_KEY = 'lausd_favorites_pending_sync';
 
 let allSchools   = [];
 let favorites    = new Set();
 let mapInstance  = null;
 let currentTab   = 'list';
+let favoritesWriteQueue = Promise.resolve();
 
 const PROG_TYPES = [
   { keys:['medical','health','biotech','bio-tech'],                           label:'🏥 Medical',     bg:'#FCE4EC',bd:'#F48FB1',tx:'#880E4F' },
@@ -49,15 +51,49 @@ function showToast(msg) {
 }
 
 /* ── Favorites ──────────────────────────── */
-function loadFavorites() {
+async function loadFavorites() {
   try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); }
   catch { favorites = new Set(); }
+  try {
+    const response = await fetch('/api/favorites', { credentials: 'same-origin' });
+    if (!response.ok) throw new Error('Favorites API unavailable');
+    const data = await response.json();
+    if (Array.isArray(data.favorites)) {
+      const pending = localStorage.getItem(FAV_PENDING_KEY) === '1';
+      if (pending || (data.favorites.length === 0 && favorites.size && !localStorage.getItem(FAV_MIGRATED_KEY))) {
+        const migration = await fetch('/api/favorites', {
+          method: 'PUT', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ favorites: [...favorites] }),
+        });
+        if (!migration.ok) throw new Error('Could not migrate browser favorites');
+        localStorage.setItem(FAV_MIGRATED_KEY, '1');
+        localStorage.removeItem(FAV_PENDING_KEY);
+      } else {
+        favorites = new Set(data.favorites);
+        localStorage.setItem(FAV_MIGRATED_KEY, '1');
+      }
+      localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
+    }
+  } catch { /* Keep browser storage available when the optional API is offline. */ }
   updateFavBadge();
 }
 
 function saveFavorites() {
-  localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
+  const snapshot = JSON.stringify([...favorites]);
+  localStorage.setItem(FAV_KEY, snapshot);
+  localStorage.setItem(FAV_PENDING_KEY, '1');
   updateFavBadge();
+  favoritesWriteQueue = favoritesWriteQueue.catch(() => {}).then(async () => {
+    const response = await fetch('/api/favorites', {
+      method: 'PUT', credentials: 'same-origin', keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favorites: JSON.parse(snapshot) }),
+    });
+    if (!response.ok) throw new Error('Could not save favorites');
+    localStorage.setItem(FAV_MIGRATED_KEY, '1');
+    if (localStorage.getItem(FAV_KEY) === snapshot) localStorage.removeItem(FAV_PENDING_KEY);
+  });
 }
 
 function updateFavBadge() {
@@ -328,24 +364,17 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 
 /* ── Data loading ───────────────────────── */
 async function loadSchools() {
-  try {
-    const res = await fetch(API_URL, { signal: AbortSignal.timeout(4000) });
-    if (!res.ok) throw new Error('API error');
-    allSchools = await res.json();
-    hide('offline-pill');
-  } catch {
-    allSchools = SCHOOLS_DATA;
-    show('offline-pill', 'flex');
-  }
+  allSchools = SCHOOLS_DATA;
+  hide('offline-pill');
   updateStats(allSchools);
   applyFilters();
 }
 
 /* ── Init ───────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   document.documentElement.lang = LANG;
   applyStaticI18n();
-  loadFavorites();
+  await loadFavorites();
   loadSchools().then(() => {
     if (!initFromURL()) {
       // Normal load — show hero

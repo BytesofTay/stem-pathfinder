@@ -2,7 +2,7 @@
 
 A prototype that helps families in Los Angeles browse and compare magnet schools with STEM-related interests. It is part of **The STEM in Me** project.
 
-**Demo:** https://stempathfinder.netlify.app — the home page and quiz-to-results path were opened on September 23, 2026. This check did not validate school data or score accuracy.
+**Demo:** https://stempathfinder.netlify.app — the home page and quiz-to-results path were opened on September 23, 2026. The saved-schools API was deployed and its read/write behavior checked on September 24, 2026. These checks did not validate school data or score accuracy.
 
 ---
 
@@ -21,11 +21,13 @@ A prototype that helps families in Los Angeles browse and compare magnet schools
 
 | Layer | Tech |
 |-------|------|
-| Frontend | Vanilla HTML/CSS/JS (no framework — runs as a static file) |
+| Frontend | Vanilla HTML/CSS/JS |
 | Map | [Leaflet.js](https://leafletjs.com/) + OpenStreetMap tiles |
-| Scoring API | FastAPI + [Claude claude-opus-4-6](https://anthropic.com) (async, semaphore-limited) |
+| Backend | Local Node.js API; production Netlify Function for browser-scoped saved schools |
+| Data store | Local SQLite (`data/stem-pathfinder.sqlite`); production Netlify Blobs. School directory remains bundled JSON/JavaScript |
+| Scoring API | Separate FastAPI service + [Claude claude-opus-4-6](https://anthropic.com) (async, semaphore-limited) |
 | Geocoding | US Census Bureau Geocoder (free, no API key) |
-| Deployment | Static files; the demo URL points to Netlify |
+| Deployment | Netlify static site and serverless favorites API |
 
 ---
 
@@ -50,18 +52,18 @@ geocode_schools.py — Geocodes school addresses (Census Bureau API)
 ## How to run locally
 
 ```bash
-# Serve the frontend
-cd lausd_magnet_app/web
-python3 -m http.server 3000
+# Install the Node backend dependency and start the app/API
+npm install
+npm start
+# Open http://localhost:3000
 
-# Optional: run the scoring API after installing requirements
-cd ../..
+# Optional: run the separate scoring API
 python3 -m pip install -r requirements.txt
 export ANTHROPIC_API_KEY="your-key"
 python3 scoring_engine.py
 ```
 
-Open http://localhost:3000
+Saved-school selections are scoped to a random, HttpOnly browser cookie. Locally, the Node API stores them in SQLite. On Netlify, a Function stores them in the site's persistent Blobs store. Existing browser favorites migrate the first time the API is available.
 
 ---
 
@@ -124,7 +126,7 @@ Keep credentials in environment variables. Never commit `.env` files or API keys
 
 ## CI
 
-GitHub Actions runs the Python unit suite and a Chromium browser flow covering quiz results, share URLs, saved schools, refresh persistence, and the visible data snapshot date.
+GitHub Actions runs the Python unit suite, a local Node/SQLite API check for guest isolation and restart persistence, and a Chromium browser flow covering quiz results, share URLs, saved schools, refresh persistence, and the visible data snapshot date. The browser flow serves static files and checks the local-storage fallback; the deployed Netlify Blobs API was checked separately with a temporary anonymous record.
 
 ## Architecture and evidence
 

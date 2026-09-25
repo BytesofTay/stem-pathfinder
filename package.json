@@ -2,7 +2,13 @@
   "name": "stem-pathfinder-browser-checks",
   "private": true,
   "scripts": {
+    "start": "node server.js",
+    "test:api": "node --test tests/server.test.cjs",
     "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.0",
+    "better-sqlite3": "^12.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0"

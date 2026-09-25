@@ -1,0 +1,10 @@
+[build]
+  publish = "lausd_magnet_app/web"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/favorites"
+  to = "/.netlify/functions/favorites"
+  status = 200
