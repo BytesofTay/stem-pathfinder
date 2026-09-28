@@ -3,18 +3,19 @@ LAUSD Magnet School Scoring Engine
 FastAPI endpoint that scores schools on Quality, Access, and Equity via Claude API.
 """
 
-import re
 import json
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import anthropic
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="LAUSD Magnet School Scoring Engine")
+
+MAX_BATCH_SIZE = 20
+PROVIDER_TIMEOUT_SECONDS = 20
 
 client = None
 
@@ -45,10 +46,10 @@ Return the result as a JSON object with school name, quality score, access score
 
 
 class School(BaseModel):
-    name: str
-    low_grade: str
-    magnet: bool
-    address: str
+    name: str = Field(min_length=1, max_length=200)
+    low_grade: str = Field(min_length=1, max_length=20)
+    magnet: bool = Field(strict=True)
+    address: str = Field(min_length=1, max_length=300)
 
 
 class Scores(BaseModel):
@@ -78,11 +79,14 @@ async def score_school(school: School) -> ScoredSchool:
     )
 
     try:
-        response = await get_client().messages.create(
-            model="claude-opus-4-6",
-            max_tokens=256,
-            thinking={"type": "adaptive"},
-            messages=[{"role": "user", "content": prompt}],
+        response = await asyncio.wait_for(
+            get_client().messages.create(
+                model="claude-opus-4-6",
+                max_tokens=256,
+                thinking={"type": "adaptive"},
+                messages=[{"role": "user", "content": prompt}],
+            ),
+            timeout=PROVIDER_TIMEOUT_SECONDS,
         )
 
         # Extract the text block (thinking blocks may also be present)
@@ -90,12 +94,8 @@ async def score_school(school: School) -> ScoredSchool:
             (block.text for block in response.content if block.type == "text"), ""
         )
 
-        # Pull the JSON object out of the response (may span multiple lines)
-        match = re.search(r'\{.*?\}', text, re.DOTALL)
-        if not match:
-            raise ValueError(f"No JSON found in response: {text!r}")
-
-        scores = Scores.model_validate(json.loads(match.group()))
+        # Reject prose or multiple JSON objects rather than silently accepting a fragment.
+        scores = Scores.model_validate(json.loads(text))
         return ScoredSchool(
             **school.model_dump(),
             quality=scores.quality,
@@ -103,8 +103,9 @@ async def score_school(school: School) -> ScoredSchool:
             equity=scores.equity,
         )
 
-    except Exception as exc:
-        return ScoredSchool(**school.model_dump(), error=str(exc))
+    except Exception:
+        # Provider messages can include account details; keep them out of API responses.
+        return ScoredSchool(**school.model_dump(), error="Scoring unavailable or invalid response")
 
 
 # ---------------------------------------------------------------------------
@@ -112,13 +113,16 @@ async def score_school(school: School) -> ScoredSchool:
 # ---------------------------------------------------------------------------
 
 @app.post("/score", response_model=list[ScoredSchool])
-async def score_schools(schools: list[School]):
+async def score_schools(schools: Annotated[list[School], Field(max_length=MAX_BATCH_SIZE)]):
     """
     Accept a list of school objects and return each one with Quality,
     Access, and Equity scores (1-10) added.
 
-    Calls Claude in parallel with a concurrency cap to avoid rate limits.
+    Calls Claude in parallel with a concurrency cap and request-size limit.
     """
+    if len(schools) > MAX_BATCH_SIZE:
+        raise HTTPException(status_code=422, detail=f"Maximum {MAX_BATCH_SIZE} schools per request")
+
     semaphore = asyncio.Semaphore(5)  # max 5 concurrent Claude calls
 
     async def bounded(school: School) -> ScoredSchool:
@@ -130,10 +134,10 @@ async def score_schools(schools: list[School]):
 
 
 @app.post("/score/file", response_model=list[ScoredSchool])
-async def score_from_file():
+async def score_from_file(limit: int = Query(default=MAX_BATCH_SIZE, ge=1, le=MAX_BATCH_SIZE)):
     """
-    Score all schools from the bundled lausd_magnet_schools.json file.
-    Convenience endpoint — no request body needed.
+    Score up to 20 schools from the bundled lausd_magnet_schools.json file.
+    Convenience endpoint — no request body needed. Limit protects provider spend.
     """
     if not SCHOOLS_FILE.exists():
         raise HTTPException(status_code=404, detail="lausd_magnet_schools.json not found")
@@ -141,7 +145,7 @@ async def score_from_file():
     with open(SCHOOLS_FILE) as f:
         raw = json.load(f)
 
-    schools = [School(**s) for s in raw]
+    schools = [School(**s) for s in raw[:limit]]
 
     semaphore = asyncio.Semaphore(5)
 

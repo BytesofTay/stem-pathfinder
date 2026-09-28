@@ -4,6 +4,8 @@ A prototype that helps families in Los Angeles browse and compare magnet schools
 
 **Demo:** https://stempathfinder.netlify.app — the home page and quiz-to-results path were opened on September 23, 2026. The saved-schools API was deployed and its read/write behavior checked on September 24, 2026. These checks did not validate school data or score accuracy.
 
+**Start here for a code review:** [quiz matching and share links](lausd_magnet_app/web/quiz.js), [saved-schools API](netlify/functions/favorites.mjs), [bounded scoring API](scoring_engine.py), and [automated checks](.github/workflows/ci.yml). The live quiz uses bundled experimental estimates; the scoring API is a separate prototype.
+
 ---
 
 ## What it does
@@ -69,7 +71,7 @@ Saved-school selections are scoped to a random, HttpOnly browser cookie. Locally
 
 ## How scores work
 
-The scoring API prompts Claude claude-opus-4-6 to assign three 1–10 values from limited school fields:
+The separate scoring API prompts Claude claude-opus-4-6 to assign three 1–10 experimental values from limited school fields. This API is not used by the live quiz. It accepts at most 20 schools per request, runs up to five calls concurrently, and times out each provider call after 20 seconds. It rejects malformed or out-of-range output and returns a generic per-school error without exposing provider details.
 
 - **Quality** — a model estimate of program focus, without direct evidence of instructional quality.
 - **Access** — a model estimate influenced by starting grade; it does not establish admissions eligibility.
@@ -84,8 +86,10 @@ The **Overall** score is the average of all three.
 ```bash
 export ANTHROPIC_API_KEY="your-key"
 python3 scoring_engine.py
-# Then hit: POST http://localhost:8000/score/file
+# Then hit: POST http://localhost:8000/score/file?limit=5
 ```
+
+The file endpoint scores up to 20 bundled records per request. Scoring invokes a paid external API; start with a small limit. The live site's bundled estimates are generated separately and do not update when this endpoint runs.
 
 ## Adding geocoding (for map)
 
@@ -130,8 +134,8 @@ GitHub Actions runs the Python unit suite, a local Node/SQLite API check for gue
 
 ## Architecture and evidence
 
-The Python API accepts school records and calls a language model with at most five concurrent requests per batch. Responses are validated as integer scores from 1 through 10; malformed or out-of-range results return a per-school error. The client is initialized only when scoring is requested, so tests and health checks do not require API credentials.
+The Python API accepts up to 20 school records and calls a language model with at most five concurrent requests per batch. Responses are validated as integer scores from 1 through 10; malformed or out-of-range results return a per-school error. The client is initialized only when scoring is requested, so tests and health checks do not require API credentials.
 
-Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, out-of-range scores, batch order, per-school failures, and credential-free health checks. They do not measure model accuracy or test the browser flow.
+Install dependencies with `pip install -r requirements.txt`, then run `python -m unittest discover -s tests -v`. Tests mock the provider and check successful responses, invalid JSON, out-of-range scores, batch order, per-school failures, request bounds, and credential-free health checks. They do not measure model accuracy; the separate Playwright suite checks the browser flow.
 
 **Limitations:** the client-side scores are experimental heuristics, not verified measures of school quality or equity. School name, address, and magnet status alone do not substantiate those conclusions. Program-focus badges are inferred from school names. The app uses scores only as sorting aids, not recommendations. The separate scoring API returns language-model outputs that have not been evaluated. See [DATA_PROVENANCE.md](DATA_PROVENANCE.md).

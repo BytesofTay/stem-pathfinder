@@ -1,6 +1,9 @@
+import asyncio
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+from fastapi import HTTPException
+from pydantic import ValidationError
 from scoring_engine import School, ScoredSchool, health, score_school, score_schools
 
 class ScoringTests(unittest.IsolatedAsyncioTestCase):
@@ -21,8 +24,33 @@ class ScoringTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_invalid_response_is_recoverable(self):
         result = await self.score('No data available')
-        self.assertIsNotNone(result.error)
+        self.assertEqual(result.error, 'Scoring unavailable or invalid response')
         self.assertEqual(result.name,'Test School')
+
+    async def test_extra_model_prose_is_rejected(self):
+        result = await self.score('Here is the score: {"quality":8,"access":6,"equity":7}')
+        self.assertEqual(result.error, 'Scoring unavailable or invalid response')
+        self.assertIsNone(result.quality)
+
+    async def test_provider_failure_does_not_expose_details(self):
+        fake = SimpleNamespace(messages=SimpleNamespace(create=AsyncMock(side_effect=RuntimeError('private account detail'))))
+        with patch('scoring_engine.get_client', return_value=fake):
+            result = await score_school(School(name='Test School', low_grade='6', magnet=True, address='Test Address'))
+        self.assertEqual(result.error, 'Scoring unavailable or invalid response')
+
+    async def test_provider_timeout_returns_per_school_error(self):
+        fake = SimpleNamespace(messages=SimpleNamespace(create=AsyncMock(side_effect=asyncio.TimeoutError)))
+        with patch('scoring_engine.get_client', return_value=fake):
+            result = await score_school(School(name='Test School', low_grade='6', magnet=True, address='Test Address'))
+        self.assertEqual(result.error, 'Scoring unavailable or invalid response')
+
+    async def test_batch_and_input_bounds(self):
+        school = School(name='Test School', low_grade='6', magnet=True, address='Test Address')
+        with self.assertRaises(HTTPException) as context:
+            await score_schools([school] * 21)
+        self.assertEqual(context.exception.status_code, 422)
+        with self.assertRaises(ValidationError):
+            School(name='x' * 201, low_grade='6', magnet=True, address='Test Address')
 
     async def test_batch_keeps_input_order_and_isolates_failures(self):
         schools = [
