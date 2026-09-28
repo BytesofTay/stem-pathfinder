@@ -103,6 +103,16 @@ function updateNext() {
 function quizNext() { qStep < QUIZ.length - 1 ? (qStep++, renderStep()) : showResults(); }
 function quizBack() { if (qStep > 0) { qStep--; renderStep(); } }
 
+function editInterests() {
+  qStep = 1;
+  hide('results-panel');
+  document.getElementById('results-panel').classList.remove('active');
+  document.getElementById('quiz-panel').classList.add('active');
+  show('quiz-panel', 'block');
+  renderStep();
+  scrollTop();
+}
+
 /* ── Matching ───────────────────────────── */
 function matchSchools(gradeKey, interests, sortKey) {
   const gv = GRADE_MAP[gradeKey] || [];
@@ -116,10 +126,6 @@ function matchSchools(gradeKey, interests, sortKey) {
     if (!matchAll && !kw.some(k => s.name.toLowerCase().includes(k))) return false;
     return true;
   });
-  if (!m.length && gv.length) {
-    // Widen: include all grades if no matches in grade range
-    m = allSchools.filter(s => !matchAll && kw.some(k => s.name.toLowerCase().includes(k)));
-  }
   if (sortKey === 'quality') m.sort((a,b) => (b.quality||0) - (a.quality||0));
   else if (sortKey === 'access') m.sort((a,b) => (b.access||0) - (a.access||0));
   else if (sortKey === 'equity') m.sort((a,b) => (b.equity||0) - (a.equity||0));
@@ -208,7 +214,7 @@ function resultCardHtml(s, i) {
 
 function renderResultCards(schools, replace) {
   const html = schools.length === 0
-    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noMatches')}</p><button class="btn-primary" onclick="startQuiz()">${t('startOver')}</button></div>`
+    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noMatches')}</p><button class="btn-primary" onclick="editInterests()">${t('changeInterests')}</button></div>`
     : schools.map((s, i) => resultCardHtml(s, i)).join('');
   const el = document.getElementById('results-list');
   if (replace) el.innerHTML = html; else el.insertAdjacentHTML('beforeend', html);
