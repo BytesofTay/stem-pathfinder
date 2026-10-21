@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import path from "node:path";
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -10,8 +11,13 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "python3 -m http.server 4191 --directory \"$PWD/lausd_magnet_app/web\"",
-    url: "http://127.0.0.1:4191",
+    command: "node server.js",
+    env: {
+      PORT: "4191",
+      HOST: "127.0.0.1",
+      STEM_PATH_DB: path.join(process.cwd(), "data", "playwright.sqlite"),
+    },
+    url: "http://127.0.0.1:4191/api/health",
     reuseExistingServer: false,
     timeout: 15_000,
   },

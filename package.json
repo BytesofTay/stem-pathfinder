@@ -4,7 +4,8 @@
   "scripts": {
     "start": "node server.js",
     "test:api": "node --test tests/server.test.cjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "node --test tests/matching.test.cjs tests/application-guide.test.cjs tests/evidence.test.cjs"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.0",

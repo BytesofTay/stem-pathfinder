@@ -1,273 +1,174 @@
-/* =========================================
-   Quiz, Matching, and Results
-   ========================================= */
-
-/* Option labels resolve through t() at render time so language switches
-   re-translate the quiz in place. */
+/* Two-step finder. Grade eligibility and interests use sourced facts. */
 const QUIZ = [
-  { id:'grade', qKey:'q1', hintKey:'q1hint', multi:false, opts:[
-    { v:'elem',  i:'🏫', lKey:'q1optElem', sKey:'q1subElem' },
-    { v:'mid',   i:'📚', lKey:'q1optMid',  sKey:'q1subMid' },
-    { v:'high',  i:'🎓', lKey:'q1optHigh', sKey:'q1subHigh' },
-  ]},
-  { id:'interest', qKey:'q2', hintKey:'q2hint', multi:true, opts:[
-    { v:'science',  i:'🔬', lKey:'q2optScience',  sKey:'q2subScience' },
-    { v:'tech',     i:'💻', lKey:'q2optTech',     sKey:'q2subTech' },
-    { v:'medical',  i:'🏥', lKey:'q2optMedical',  sKey:'q2subMedical' },
-    { v:'engineer', i:'⚙️', lKey:'q2optEngineer', sKey:'q2subEngineer' },
-    { v:'arts',     i:'🎨', lKey:'q2optArts',     sKey:'q2subArts' },
-    { v:'any',      i:'🌟', lKey:'q2optAny',      sKey:'q2subAny' },
-  ]},
-  { id:'priority', qKey:'q3', hintKey:'q3hint', multi:false, opts:[
-    { v:'quality', i:'⭐',  lKey:'q3optQuality', sKey:'q3subQuality' },
-    { v:'access',  i:'🏘️', lKey:'q3optAccess',  sKey:'q3subAccess' },
-    { v:'equity',  i:'⚖️', lKey:'q3optEquity',  sKey:'q3subEquity' },
-  ]},
+  { id: 'grade', qKey: 'q1', hintKey: 'q1hint', multi: false, opts:
+    ['K', ...Array.from({ length: 12 }, (_, index) => String(index + 1))].map(grade => ({ v: grade })) },
+  { id: 'interest', qKey: 'q2', hintKey: 'q2hint', multi: true, opts: [
+    { v: 'science', i: '🔬', lKey: 'q2optScience', sKey: 'q2subScience' },
+    { v: 'tech', i: '💻', lKey: 'q2optTech', sKey: 'q2subTech' },
+    { v: 'medical', i: '🏥', lKey: 'q2optMedical', sKey: 'q2subMedical' },
+    { v: 'engineer', i: '⚙️', lKey: 'q2optEngineer', sKey: 'q2subEngineer' },
+    { v: 'arts', i: '🎨', lKey: 'q2optArts', sKey: 'q2subArts' },
+    { v: 'any', i: '🌟', lKey: 'q2optAny', sKey: 'q2subAny' },
+  ] },
 ];
-
-const GRADE_MAP   = { elem:['K','1','4'], mid:['6','7'], high:['9'] };
-const INT_KEYS    = {
-  science: ['science','stem','environment','earth','ecology','museum'],
-  tech:    ['stem','tech','engineering','aerospace','computer','math','digital','technology'],
-  medical: ['medical','health','biotech','bio-tech'],
-  engineer:['engineering','stem','tech','aerospace','math','polytechnic'],
-  arts:    ['arts','performing','visual','film','theater','drama','music','journalism','media'],
-};
-const INT_LABEL_KEYS   = { science:'intScience', tech:'intTech', medical:'intMedical', engineer:'intEngineer', arts:'intArts', any:'intAny' };
-const GRADE_LABEL_KEYS = { elem:'gradeElem', mid:'gradeMid', high:'gradeHigh' };
-
+const INT_LABEL_KEYS = { science: 'intScience', tech: 'intTech', medical: 'intMedical', engineer: 'intEngineer', arts: 'intArts', any: 'intAny' };
+const GRADE_LABEL_KEYS = { elem: 'gradeElem', mid: 'gradeMid', high: 'gradeHigh' };
 let qStep = 0;
-let qAns  = { interest:[] };
+let qAns = { interest: [] };
 let allResults = [];
 
-/* ── Quiz flow ──────────────────────────── */
 function startQuiz() {
   qStep = 0; qAns = { interest: [] };
-  hide('hero-section'); hide('results-panel');
+  hide('hero-section'); hide('results-panel'); hide('browse-section');
   document.getElementById('results-panel').classList.remove('active');
   document.getElementById('quiz-panel').classList.add('active');
-  show('quiz-panel', 'block');
+  show('quiz-panel');
   renderStep(); scrollTop();
 }
-
 function renderStep() {
-  const s   = QUIZ[qStep];
-  const pct = Math.round((qStep + 1) / QUIZ.length * 100);
-  document.getElementById('qpf').style.width = pct + '%';
+  const step = QUIZ[qStep];
+  const percent = Math.round((qStep + 1) / QUIZ.length * 100);
+  document.getElementById('qpf').style.width = percent + '%';
+  document.getElementById('quiz-progress-bar').setAttribute('aria-valuenow', String(percent));
   document.getElementById('step-label').textContent = t('stepOf', { n: qStep + 1, total: QUIZ.length });
-  document.getElementById('step-pct').textContent   = pct + '%';
+  document.getElementById('step-pct').textContent = percent + '%';
   document.getElementById('btn-back').style.visibility = qStep === 0 ? 'hidden' : 'visible';
   document.getElementById('btn-back').textContent = t('back');
-  document.getElementById('btn-next').textContent = qStep === QUIZ.length - 1 ? t('seeMatches') : t('next');
-
-  const cur = s.multi ? (qAns.interest || []) : [qAns[s.id]];
-  document.getElementById('quiz-body').innerHTML = `
-    <h2>${t(s.qKey)}</h2>
-    <p class="quiz-hint">${t(s.hintKey)}</p>
-    <div class="option-grid" role="group" aria-label="${t(s.qKey)}">
-      ${s.opts.map(o => `
-        <div class="opt ${cur.includes(o.v) ? 'selected' : ''}"
-             role="button" tabindex="0" aria-pressed="${cur.includes(o.v)}"
-             onclick="pick('${s.id}','${o.v}',${s.multi})"
-             onkeydown="if(event.key==='Enter'||event.key===' ')pick('${s.id}','${o.v}',${s.multi})"
-             data-v="${o.v}">
-          <div class="opt-icon" aria-hidden="true">${o.i}</div>
-          <div class="opt-label">${t(o.lKey)}</div>
-          <div class="opt-sub">${t(o.sKey)}</div>
-        </div>`).join('')}
-    </div>`;
+  const nextLabel = t(qStep === QUIZ.length - 1 ? 'seeMatches' : 'next');
+  document.getElementById('btn-next').textContent = nextLabel;
+  document.getElementById('btn-next').setAttribute('aria-label', nextLabel);
+  const current = step.multi ? (qAns.interest || []) : [qAns[step.id]];
+  document.getElementById('quiz-body').innerHTML = '<h2 tabindex="-1">' + escapeHtml(t(step.qKey)) + '</h2><p class="quiz-hint">' +
+    escapeHtml(t(step.hintKey)) + '</p><div class="option-grid ' + (step.id === 'grade' ? 'grade-options' : '') + '" role="group" aria-label="' +
+    escapeHtml(t(step.qKey)) + '">' + step.opts.map(option => {
+      const label = step.id === 'grade' ? (option.v === 'K' ? tx('gradeKindergarten', 'Kindergarten') : tx('gradeValue', 'Grade {grade}', { grade: option.v })) : t(option.lKey);
+      return '<button type="button" class="opt ' + (current.includes(option.v) ? 'selected' : '') + '" aria-pressed="' +
+        current.includes(option.v) + '" data-v="' + escapeHtml(option.v) + '" data-quiz-field="' + step.id + '">' +
+        (option.i ? '<span class="opt-icon" aria-hidden="true">' + option.i + '</span>' : '') +
+        '<span class="opt-label">' + escapeHtml(label) + '</span>' +
+        (option.sKey ? '<span class="opt-sub">' + escapeHtml(t(option.sKey)) + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
   updateNext();
 }
-
-function pick(id, val, multi) {
+function pick(id, value, multi) {
+  const step = QUIZ[qStep];
+  if (!step || id !== step.id || !step.opts.some(option => option.v === value)) return;
   if (multi) {
-    if (val === 'any') {
-      qAns.interest = qAns.interest.includes('any') ? [] : ['any'];
-    } else {
-      qAns.interest = qAns.interest.filter(v => v !== 'any');
-      qAns.interest.includes(val)
-        ? (qAns.interest = qAns.interest.filter(v => v !== val))
-        : qAns.interest.push(val);
+    if (value === 'any') qAns.interest = qAns.interest.includes('any') ? [] : ['any'];
+    else {
+      qAns.interest = qAns.interest.filter(interest => interest !== 'any');
+      if (qAns.interest.includes(value)) qAns.interest = qAns.interest.filter(interest => interest !== value);
+      else qAns.interest.push(value);
     }
-  } else {
-    qAns[id] = val;
-  }
+  } else qAns[id] = value;
+  /* Preserve native-button focus when a selection rebuilds the options. */
   renderStep();
+  document.querySelector('.opt[data-v="' + value + '"]')?.focus();
 }
-
 function updateNext() {
-  const s = QUIZ[qStep];
-  document.getElementById('btn-next').disabled = s.multi ? !qAns.interest.length : !qAns[s.id];
+  const step = QUIZ[qStep];
+  document.getElementById('btn-next').disabled = step.multi ? !qAns.interest.length : !qAns[step.id];
 }
-
-function quizNext() { qStep < QUIZ.length - 1 ? (qStep++, renderStep()) : showResults(); }
-function quizBack() { if (qStep > 0) { qStep--; renderStep(); } }
-
+function quizNext() {
+  if (document.getElementById('btn-next').disabled) return;
+  if (qStep < QUIZ.length - 1) { qStep++; renderStep(); document.querySelector('#quiz-body h2')?.focus(); }
+  else showResults();
+}
+function quizBack() { if (qStep > 0) { qStep--; renderStep(); document.querySelector('#quiz-body h2')?.focus(); } }
 function editInterests() {
   qStep = 1;
-  hide('results-panel');
+  hide('results-panel'); hide('browse-section');
   document.getElementById('results-panel').classList.remove('active');
   document.getElementById('quiz-panel').classList.add('active');
-  show('quiz-panel', 'block');
-  renderStep();
-  scrollTop();
+  show('quiz-panel'); renderStep(); scrollTop();
 }
-
-/* ── Matching ───────────────────────────── */
-function matchSchools(gradeKey, interests, sortKey) {
-  const gv = GRADE_MAP[gradeKey] || [];
-  let kw = [], matchAll = !interests.length || interests.includes('any');
-  if (!matchAll) {
-    interests.forEach(i => { if (INT_KEYS[i]) kw.push(...INT_KEYS[i]); });
-    kw = [...new Set(kw)];
-  }
-  let m = allSchools.filter(s => {
-    if (gv.length && !gv.includes(s.low_grade)) return false;
-    if (!matchAll && !kw.some(k => s.name.toLowerCase().includes(k))) return false;
-    return true;
-  });
-  if (sortKey === 'quality') m.sort((a,b) => (b.quality||0) - (a.quality||0));
-  else if (sortKey === 'access') m.sort((a,b) => (b.access||0) - (a.access||0));
-  else if (sortKey === 'equity') m.sort((a,b) => (b.equity||0) - (a.equity||0));
-  else m.sort((a,b) => (overall(b)||0) - (overall(a)||0));
-  return m;
+function interestMatchesForName(name, interests) {
+  return SchoolUtils.nameInterestMatches(name, interests);
 }
-
-function whyBlurb(s) {
-  const ov = overall(s);
-  const p = getProg(s.name);
-  if (p)
-    return t('whyProgram', {
-      icon: p.label.split(' ')[0],
-      prog: p.label.replace(/^[^\s]+ /, ''),
-      grades: gradeLabel(s.low_grade),
-    });
-  return t('whySolid', { grades: gradeLabel(s.low_grade), score: ov });
+function matchSchools(grade, interests) {
+  return SchoolUtils.matchesForGrade(allSchools, grade, interests,
+    typeof PROGRAM_EVIDENCE === 'undefined' ? [] : PROGRAM_EVIDENCE);
 }
-
-/* ── Results ────────────────────────────── */
+function whyBlurb(school) {
+  const matching = SchoolUtils.interestMatch(school, qAns.interest,
+    typeof PROGRAM_EVIDENCE === 'undefined' ? [] : PROGRAM_EVIDENCE).verified;
+  if (matching.length) return tx('whyVerifiedMatch', '{grades}. An official program source lists: {interests}. Confirm entry requirements with the school.',
+    { grades: gradeLabel(school), interests: matching.map(interestLabel).join(', ') });
+  return tx('whyGradeMatch', '{grades}. Check the official school page for program and application details.', { grades: gradeLabel(school) });
+}
+function resultsNoticeHtml() {
+  const unknownCount = allSchools.filter(school => !SchoolUtils.gradeRange(school).known).length;
+  const hasInterest = (qAns.interest || []).some(interest => interest !== 'any');
+  return (hasInterest ? '<p class="results-notice">' + escapeHtml(tx('reviewedMatchesNotice',
+    'Interest results use reviewed official program information. Other schools may also offer these interests; browse the full directory to explore them.')) + '</p>' : '') +
+    (unknownCount ? '<p class="results-notice">' + escapeHtml(tx('unknownGradeNotice',
+      '{n} schools have unconfirmed grade ranges and are excluded from grade matches. They remain in the full directory.', { n: unknownCount })) + '</p>' : '');
+}
 function showResults() {
-  allResults = matchSchools(qAns.grade, qAns.interest || [], qAns.priority || 'overall');
-  hide('quiz-panel');
+  allResults = matchSchools(qAns.grade, qAns.interest || []);
+  hide('hero-section'); hide('quiz-panel'); hide('browse-section');
   document.getElementById('quiz-panel').classList.remove('active');
   document.getElementById('results-panel').classList.add('active');
-  show('results-panel', 'block');
-
-  const gl = GRADE_LABEL_KEYS[qAns.grade] ? t(GRADE_LABEL_KEYS[qAns.grade]) : 'student';
-  const il = (qAns.interest || []).map(i => INT_LABEL_KEYS[i] ? t(INT_LABEL_KEYS[i]) : i).join(' · ') || 'STEM';
-  document.getElementById('results-sub').textContent  = t('resultsFor', { grade: gl, interests: il });
-  document.getElementById('match-pill').textContent   = t('schoolsFound', { n: allResults.length });
-
-  renderResultCards(allResults.slice(0, 5), true);
-  const rem = allResults.length - 5;
-  const sw  = document.getElementById('see-more-wrap');
-  if (rem > 0) {
-    sw.style.display = '';
-    document.getElementById('see-more-btn').textContent = t('showMore', { n: rem });
-  } else {
-    sw.style.display = 'none';
-  }
+  show('results-panel');
+  const grade = GRADE_LABEL_KEYS[qAns.grade] ? t(GRADE_LABEL_KEYS[qAns.grade]) :
+    qAns.grade === 'K' ? tx('gradeKindergarten', 'Kindergarten') : tx('gradeValue', 'Grade {grade}', { grade: qAns.grade });
+  const interests = (qAns.interest || []).map(interest => INT_LABEL_KEYS[interest] ? t(INT_LABEL_KEYS[interest]) : interest).join(' · ');
+  document.getElementById('results-sub').textContent = t('resultsFor', { grade, interests });
+  document.getElementById('match-pill').textContent = t('schoolsFound', { n: allResults.length });
+  renderResultCards(allResults.slice(0, 5), true, 0);
+  updateShowMore();
   scrollTop();
-
-  // Write shareable URL to address bar
   pushResultsURL();
 }
-
-function resultCardHtml(s, i) {
-  const ov  = overall(s);
-  const p   = getProg(s.name);
-  const cls = ov != null ? scCls(ov) : 'mid';
-  const badge = p
-    ? `<span class="prog-badge" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">${p.label}</span>`
-    : '';
-  const chips = s.quality != null ? `
-    <span class="score-chip" style="background:var(--${scCls(s.quality)}-bg);border-color:var(--${scCls(s.quality)}-bd);color:var(--${scCls(s.quality)})">${t('quality')} ${s.quality}/10</span>
-    <span class="score-chip" style="background:var(--${scCls(s.access)}-bg);border-color:var(--${scCls(s.access)}-bd);color:var(--${scCls(s.access)})">${t('access')} ${s.access}/10</span>
-    <span class="score-chip" style="background:var(--${scCls(s.equity)}-bg);border-color:var(--${scCls(s.equity)}-bd);color:var(--${scCls(s.equity)})">${t('equity')} ${s.equity}/10</span>` : '';
-  const favActive = favorites.has(s.name);
-  return `<div class="rcard" style="animation-delay:${i * 55}ms">
-    <div class="rcard-inner">
-      <div class="rcard-num" aria-label="Result ${i+1}">${i + 1}</div>
-      <div class="rcard-body">
-        <div class="rcard-name">${s.name}</div>
-        <div class="rcard-meta">
-          <span class="meta-item meta-grade">🎓 ${gradeLabel(s.low_grade)}</span>
-          ${badge}
-          ${ov != null ? `<span class="meta-item" style="font-weight:700;color:var(--${cls})">★ ${ov}/10</span>` : ''}
-        </div>
-        <div class="rcard-why">${whyBlurb(s)}</div>
-        <div class="rcard-chips">${chips}</div>
-        <div class="rcard-actions">
-          <a class="btn-apply" href="${APPLY_URL}" target="_blank" rel="noopener noreferrer">${t('applyNow')}</a>
-          <a class="btn-map" href="${mapsUrl(s.address)}" target="_blank" rel="noopener noreferrer">📍 ${s.address}</a>
-          <button class="fav-btn ${favActive ? 'active' : ''}"
-                  onclick="toggleFavorite('${s.name.replace(/'/g,"\\'")}',this)"
-                  aria-label="${favActive ? 'Remove from saved' : 'Save school'}"
-                  title="${favActive ? 'Saved' : 'Save for later'}">
-            ${favActive ? '❤️' : '🤍'}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>`;
+function resultCardHtml(school, index) {
+  return '<article class="rcard" role="listitem" data-school="' + escapeHtml(school.name) + '"><div class="rcard-inner">' +
+    '<div class="rcard-num" aria-hidden="true">' + (index + 1) + '</div><div class="rcard-body"><h3 class="rcard-name">' +
+    escapeHtml(school.name) + '</h3><div class="rcard-meta"><span class="meta-item meta-grade">' + escapeHtml(gradeLabel(school)) +
+    '</span></div><p class="rcard-why">' + escapeHtml(whyBlurb(school)) + '</p>' + schoolDetailsHtml(school) +
+    '<div class="rcard-actions">' + schoolLocationHtml(school, 'btn-map') + schoolActionButtons(school) +
+    '</div></div></div></article>';
 }
-
-function renderResultCards(schools, replace) {
-  const html = schools.length === 0
-    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noMatches')}</p><button class="btn-primary" onclick="editInterests()">${t('changeInterests')}</button></div>`
-    : schools.map((s, i) => resultCardHtml(s, i)).join('');
-  const el = document.getElementById('results-list');
-  if (replace) el.innerHTML = html; else el.insertAdjacentHTML('beforeend', html);
+function renderResultCards(schools, replace, offset) {
+  const html = !schools.length && replace ? '<div class="no-results"><p>' + escapeHtml(t('noMatches')) +
+    '</p><button class="btn-primary" data-action="edit-interests">' + escapeHtml(t('changeInterests')) + '</button></div>' :
+    schools.map((school, index) => resultCardHtml(school, (offset || 0) + index)).join('');
+  const element = document.getElementById('results-list');
+  if (replace) element.innerHTML = resultsNoticeHtml() + html;
+  else element.insertAdjacentHTML('beforeend', html);
 }
-
+function updateShowMore() {
+  const remaining = allResults.length - document.querySelectorAll('#results-list .rcard').length;
+  document.getElementById('see-more-wrap').style.display = remaining > 0 ? '' : 'none';
+  if (remaining > 0) document.getElementById('see-more-btn').textContent = t('showMore', { n: remaining });
+}
 function showMore() {
-  const shown = document.querySelectorAll('.rcard').length;
-  const more  = allResults.slice(shown, shown + 10);
-  renderResultCards(more, false);
-  const rem = allResults.length - document.querySelectorAll('.rcard').length;
-  if (rem > 0) document.getElementById('see-more-btn').textContent = t('showMore', { n: rem });
-  else document.getElementById('see-more-wrap').style.display = 'none';
+  const shown = document.querySelectorAll('#results-list .rcard').length;
+  renderResultCards(allResults.slice(shown, shown + 10), false, shown);
+  updateShowMore();
 }
-
-/* ── URL Sharing ────────────────────────── */
 function pushResultsURL() {
   const interests = (qAns.interest || []).join(',') || 'any';
-  const hash = `#results/${qAns.grade || 'elem'}/${interests}/${qAns.priority || 'overall'}`;
-  history.replaceState(null, '', hash);
+  history.replaceState(null, '', '#results/' + encodeURIComponent(qAns.grade || 'K') + '/' + interests + '/match');
 }
-
-function shareResults() {
-  const url = location.href;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
-  } else {
-    // Fallback for older browsers
-    const ta = document.createElement('textarea');
-    ta.value = url; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast(t('linkCopied'));
-  }
-}
-
+function shareResults() { return copyLink(location.href, 'linkCopied'); }
 function loadFromURL() {
-  const hash = location.hash;
-  if (!hash.startsWith('#results/')) return false;
-  const parts = hash.slice('#results/'.length).split('/');
-  if (parts.length < 3) return false;
-  const [grade, interestStr, priority] = parts;
-  qAns = {
-    grade,
-    interest: interestStr === 'any' ? ['any'] : interestStr.split(',').filter(Boolean),
-    priority
-  };
+  if (!location.hash.startsWith('#results/')) return false;
+  const parts = location.hash.slice('#results/'.length).split('/');
+  if (parts.length < 2) return false;
+  let grade;
+  try { grade = decodeURIComponent(parts[0]); } catch { return false; }
+  const validGrade = ['K', ...Array.from({ length: 12 }, (_, index) => String(index + 1)), 'elem', 'mid', 'high'].includes(grade);
+  const interests = parts[1].split(',').filter(value => Object.hasOwn(INT_LABEL_KEYS, value));
+  if (!validGrade || !interests.length) return false;
+  qAns = { grade, interest: interests.includes('any') ? ['any'] : [...new Set(interests)] };
   return true;
 }
+function initFromURL() { if (loadFromURL()) { showResults(); return true; } return false; }
 
-function initFromURL() {
-  if (loadFromURL()) {
-    showResults();
-    return true;
-  }
-  return false;
-}
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', event => {
+    const option = event.target.closest('[data-quiz-field]');
+    if (option) pick(option.dataset.quizField, option.dataset.v, QUIZ[qStep].multi);
+    if (event.target.closest('[data-action="edit-interests"]')) editInterests();
+  });
+});

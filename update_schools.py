@@ -1,177 +1,229 @@
-"""
-STEM Pathfinder — automatic school directory updater.
+"""Refresh the CDE school snapshot locally, with validation and a review report.
 
-Downloads the current CDE public school directory, filters to active LAUSD
-magnet schools, merges changes into the site's schools_data.js (preserving
-existing scores and coordinates), and redeploys to Netlify when anything
-actually changed.
-
-Run manually:  python3 update_schools.py
-Run by cron:   see update_schools.sh
+Running this script never publishes a site. The scheduled workflow uploads the
+result and its diff for review; deployment stays a separate, explicit action.
+Reviewed program descriptions live in program_evidence.js and are not modified.
 """
+import argparse
 import csv
+import hashlib
+import io
 import json
+import math
 import re
 import shutil
 import subprocess
-import sys
-import time
-from datetime import date
+from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
-BASE      = Path(__file__).parent
-JS_FILE   = BASE / 'lausd_magnet_app' / 'web' / 'schools_data.js'
-HTML_FILE = BASE / 'lausd_magnet_app' / 'web' / 'index.html'
-# California open-data portal (CKAN) — CDE publishes a new dataset each school
-# year (california-public-schools-YYYY-YY), so we discover the latest at runtime.
-CKAN_SEARCH = 'https://data.ca.gov/api/3/action/package_search?q=california-public-schools&rows=20'
-# Works on the Mac (homebrew path) and on GitHub Actions (netlify-cli on PATH,
-# authenticated via the NETLIFY_AUTH_TOKEN environment variable).
-NETLIFY   = shutil.which('netlify') or '/opt/homebrew/bin/netlify'
-CURL      = shutil.which('curl') or '/usr/bin/curl'
-SITE_ID   = '39838051-15f1-44e2-a688-9f6495977ca8'  # stempathfinder.netlify.app
+BASE = Path(__file__).resolve().parent
+JS_FILE = BASE / "lausd_magnet_app" / "web" / "schools_data.js"
+CKAN_SEARCH = "https://data.ca.gov/api/3/action/package_search?q=california-public-schools&rows=100"
+DISTRICT_CODE = "1964733"
+MIN_SCHOOLS = 100
+MAX_SCHOOLS = 400
+MAX_ROSTER_CHANGE = 0.10
+REQUIRED_COLUMNS = {
+    "Academic Year", "CDS Code", "District Code", "District Name", "School Name",
+    "Status", "Magnet", "Grade Low", "Grade High", "Street", "City", "Zip",
+    "State", "School Website", "Latitude", "Longitude",
+}
+GRADE_VALUES = {"TK": -1, "K": 0, **{str(n): n for n in range(1, 13)}}
 
-def log(msg):
-    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}", flush=True)
 
-def curl(url, timeout=120):
+def curl(url, timeout=180):
+    """Fetch a source successfully or fail without changing the snapshot."""
     result = subprocess.run(
-        [CURL, '-s', '-L', '--max-time', str(timeout), url],
-        capture_output=True, timeout=timeout + 30)
-    if result.returncode != 0:
-        raise RuntimeError(f'curl {url} failed with exit code {result.returncode}')
+        [shutil.which("curl") or "curl", "--fail", "--silent", "--show-error",
+         "--location", "--proto", "=https", "--proto-redir", "=https",
+         "--max-time", str(timeout), url],
+        capture_output=True, timeout=timeout + 15, check=False,
+    )
+    if result.returncode:
+        raise ValueError(f"Source download failed (curl exit {result.returncode})")
     return result.stdout
 
-def find_latest_dataset_csv():
-    """Return the newest CDE school-directory dataset name and CSV URL."""
-    data = json.loads(curl(CKAN_SEARCH))
+
+def find_latest_dataset_csv(catalog=None):
+    catalog = catalog if catalog is not None else json.loads(curl(CKAN_SEARCH))
+    if not catalog.get("success", False):
+        raise ValueError("CDE catalog did not report success")
     candidates = []
-    for pkg in data.get('result', {}).get('results', []):
-        name = pkg.get('name', '')
-        if not name.startswith('california-public-schools-'):
+    for package in catalog.get("result", {}).get("results", []):
+        name = package.get("name", "")
+        match = re.fullmatch(r"california-public-schools-(20\d{2})-(\d{2})", name)
+        if not match:
             continue
-        csv_urls = [r['url'] for r in pkg.get('resources', []) if r.get('format') == 'CSV']
-        if csv_urls:
-            candidates.append((name, csv_urls[0]))
+        for resource in package.get("resources", []):
+            url = resource.get("url", "")
+            parsed = urlsplit(url)
+            if (resource.get("format", "").upper() == "CSV"
+                    and parsed.scheme == "https"
+                    and parsed.hostname in {"gis.data.ca.gov", "data.ca.gov", "www.cde.ca.gov"}):
+                candidates.append((int(match.group(1)), name, url))
+                break
     if not candidates:
-        raise RuntimeError('No california-public-schools dataset with a CSV found on data.ca.gov')
-    name, url = max(candidates)  # names sort by year: ...-2024-25 < ...-2025-26
-    log(f'Latest dataset: {name}')
+        raise ValueError("No recognized CDE school-year CSV found in official catalog")
+    _, name, url = max(candidates)
     return name, url
 
-def fetch_cde_magnets():
-    """Download the current school year's directory; return active LAUSD magnets."""
-    log('Finding latest CDE dataset on data.ca.gov…')
-    dataset_name, csv_url = find_latest_dataset_csv()
-    log('Downloading school directory CSV…')
-    text = curl(csv_url, timeout=180).decode('utf-8-sig', errors='replace')
-    rows = list(csv.DictReader(text.splitlines()))
-    magnets = [r for r in rows
-               if r.get('Status') == 'Active'
-               and 'Los Angeles Unified' in r.get('District Name', '')
-               and r.get('Magnet', '').strip() == 'Y']
-    log(f'CDE lists {len(magnets)} active LAUSD magnet schools')
-    if len(magnets) < 100:
-        # A collapsed count means CDE changed their format or the filter broke —
-        # bail rather than gutting the live site's data.
-        raise RuntimeError(f'Only {len(magnets)} magnets found; refusing to update (sanity check)')
-    return magnets, dataset_name
 
-def low_grade_of(grade):
-    """'KG' -> 'K', '09' -> '9', '01' -> '1'."""
-    g = (grade or '').strip().upper()
-    if g.startswith('K'):
-        return 'K'
-    return g.lstrip('0') or 'K'
+def normalize_grade(value):
+    value = value.strip().upper()
+    if value == "KG":
+        value = "K"
+    elif value.isdigit():
+        value = str(int(value))
+    if value not in GRADE_VALUES:
+        raise ValueError(f"Unknown grade value: {value!r}")
+    return value
 
-def to_school(r):
-    s = {
-        'name': r['School Name'].strip(),
-        'low_grade': low_grade_of(r.get('Grade Low')),
-        'magnet': True,
-        'address': r.get('Street', '').strip(),
-    }
+
+def website_url(value):
+    value = value.strip()
+    if not value:
+        return None
+    parsed = urlsplit(value)
+    if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+            or parsed.username or parsed.password
+            or any(char.isspace() for char in value)):
+        raise ValueError("School website must be an absolute http(s) URL")
+    return value
+
+
+def to_school(row):
+    """Keep official directory fields; do not infer program themes or ratings."""
+    cds = row["CDS Code"].strip()
+    if not re.fullmatch(r"1964733\d{7}", cds):
+        raise ValueError("Invalid LAUSD CDS code")
+    if row["District Code"].strip() != DISTRICT_CODE:
+        raise ValueError("CDS/district-code mismatch")
+    name = row["School Name"].strip()
+    street, city, state, zip_code = (row[key].strip() for key in ("Street", "City", "State", "Zip"))
+    if not name or not street or not city or state != "CA" or not re.fullmatch(r"\d{5}(?:-\d{4})?", zip_code):
+        raise ValueError(f"Incomplete or invalid school address/name: {cds}")
+    low = normalize_grade(row["Grade Low"])
+    high = normalize_grade(row["Grade High"])
+    if GRADE_VALUES[low] > GRADE_VALUES[high]:
+        raise ValueError(f"Reversed grade range: {cds}")
     try:
-        s['lat'] = round(float(r['Latitude']), 6)
-        s['lng'] = round(float(r['Longitude']), 6)
-    except (KeyError, ValueError, TypeError):
-        pass
-    return s
+        lat, lng = float(row["Latitude"]), float(row["Longitude"])
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"Missing or invalid coordinates: {cds}") from error
+    # Broad Los Angeles County bounds catch swapped axes and wrong-country points.
+    if not (math.isfinite(lat) and math.isfinite(lng) and 32.7 <= lat <= 35.0 and -119.2 <= lng <= -117.5):
+        raise ValueError(f"Coordinates outside expected LA County bounds: {cds}")
+    return {
+        "id": cds, "cds_code": cds, "name": name,
+        "low_grade": low, "high_grade": high, "magnet": True,
+        "street": street, "city": city, "state": state, "zip": zip_code,
+        "address": f"{street}, {city}, {state} {zip_code}",
+        "website": website_url(row["School Website"]),
+        "lat": round(lat, 8), "lng": round(lng, 8),
+    }
 
-def load_existing():
-    content = JS_FILE.read_text().strip()
-    json_str = content[content.index('['):content.rindex(']') + 1]
-    metadata_match = re.search(r'const SCHOOL_DATA_SOURCE = (\{[^\n]+\});', content)
-    metadata = json.loads(metadata_match.group(1)) if metadata_match else {}
-    return json.loads(json_str), metadata
 
-def merge(existing, cde_schools):
-    """CDE is the source of truth for the roster; existing data keeps its scores."""
-    by_name = {s['name']: s for s in existing}
-    merged, added = [], []
-    for cde in cde_schools:
-        old = by_name.get(cde['name'])
-        if old:
-            # Keep scores; refresh address/grades; prefer CDE coordinates.
-            for k in ('quality', 'access', 'equity'):
-                if k in old:
-                    cde[k] = old[k]
-            if 'lat' not in cde and 'lat' in old:
-                cde['lat'], cde['lng'] = old['lat'], old['lng']
-        else:
-            added.append(cde['name'])
-        merged.append(cde)
-    removed = [n for n in by_name if n not in {c['name'] for c in cde_schools}]
-    return merged, added, removed
+def parse_cde_csv(raw, dataset):
+    expected_year = dataset.removeprefix("california-public-schools-")
+    if not re.fullmatch(r"20\d{2}-\d{2}", expected_year):
+        raise ValueError("Invalid source dataset school year")
+    reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig"), newline=""))
+    missing = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+    if missing:
+        raise ValueError(f"CDE schema changed; missing columns: {', '.join(sorted(missing))}")
+    schools = []
+    for row in reader:
+        # The CDE school-level Magnet flag is not a complete LAUSD program roster.
+        if (row["Status"].strip() != "Active"
+                or row["District Name"].strip() != "Los Angeles Unified"
+                or row["Magnet"].strip().upper() != "Y"):
+            continue
+        if row["Academic Year"].strip() != expected_year:
+            raise ValueError("CSV school year does not match selected catalog dataset")
+        schools.append(to_school(row))
+    if not MIN_SCHOOLS <= len(schools) <= MAX_SCHOOLS:
+        raise ValueError(f"Unexpected roster count {len(schools)}; expected {MIN_SCHOOLS}–{MAX_SCHOOLS}")
+    ids = [school["id"] for school in schools]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Duplicate CDS codes in active magnet roster")
+    return sorted(schools, key=lambda school: (school["name"].casefold(), school["id"]))
 
-def bump_cache_version():
-    """Point index.html at the fresh data file so browsers don't serve stale JS."""
-    stamp = date.today().strftime('%Y%m%d')
-    html = HTML_FILE.read_text()
-    html = re.sub(r'schools_data\.js\?v=[^"]*', f'schools_data.js?v={stamp}', html)
-    HTML_FILE.write_text(html)
 
-def deploy():
-    log('Deploying to Netlify…')
-    result = subprocess.run(
-        [NETLIFY, 'deploy', '--dir', str(BASE / 'lausd_magnet_app' / 'web'),
-         '--prod', '--site', SITE_ID],
-        capture_output=True, text=True, timeout=300)
-    if result.returncode != 0:
-        raise RuntimeError(f'Netlify deploy failed:\n{result.stderr[-2000:]}')
-    log('Deploy complete: https://stempathfinder.netlify.app')
+def load_existing(path=JS_FILE):
+    content = path.read_text(encoding="utf-8")
+    match = re.search(r"const SCHOOLS_DATA = (\[.*\]);", content, re.DOTALL)
+    metadata = re.search(r"const SCHOOL_DATA_SOURCE = (\{[^\n]+\});", content)
+    if not match:
+        raise ValueError("Existing school snapshot is not recognized")
+    return json.loads(match.group(1)), json.loads(metadata.group(1)) if metadata else {}
+
+
+def review_changes(existing, schools):
+    # A name-only comparison is used solely to migrate the legacy snapshot once.
+    stable_ids = all(school.get("id") for school in existing)
+    key = (lambda school: school["id"]) if stable_ids else (lambda school: school["name"])
+    old, new = {key(s): s for s in existing}, {key(s): s for s in schools}
+    added, removed = sorted(new.keys() - old.keys()), sorted(old.keys() - new.keys())
+    fraction = (len(added) + len(removed)) / max(len(old), 1)
+    if fraction > MAX_ROSTER_CHANGE:
+        raise ValueError(f"Roster change {fraction:.1%} exceeds {MAX_ROSTER_CHANGE:.0%}; review the source before accepting a new baseline")
+    changed = [identifier for identifier in new.keys() & old.keys() if new[identifier] != old[identifier]]
+    return {
+        "oldCount": len(existing), "newCount": len(schools),
+        "added": added, "removed": removed, "detailsChanged": sorted(changed),
+        "rosterChangeFraction": fraction, "legacyIdMigration": not stable_ids,
+        "missingWebsites": sum(s["website"] is None for s in schools),
+    }
+
+
+def refresh(raw, dataset, csv_url, checked_at, data_file=JS_FILE):
+    # Validate every row and the whole change before writing any output.
+    datetime.strptime(checked_at, "%Y-%m-%d")
+    schools = parse_cde_csv(raw, dataset)
+    existing, old_metadata = load_existing(data_file)
+    report = review_changes(existing, schools)
+    changed_at = checked_at if schools != existing else old_metadata.get("changedAt", old_metadata.get("retrievedAt", checked_at))
+    metadata = {
+        "source": "California Department of Education public school directory",
+        "dataset": dataset,
+        "schoolYear": dataset.removeprefix("california-public-schools-"),
+        "sourceUrl": f"https://data.ca.gov/dataset/{dataset}",
+        "csvUrl": csv_url,
+        "checkedAt": checked_at, "retrievedAt": checked_at, "changedAt": changed_at,
+        "sha256": hashlib.sha256(raw).hexdigest(), "recordCount": len(schools),
+        "scope": "Active LAUSD school records with CDE Magnet=Y; not a complete magnet program directory",
+    }
+    payload = "const SCHOOL_DATA_SOURCE = " + json.dumps(metadata, separators=(",", ":")) + ";\n"
+    payload += "const SCHOOLS_DATA = " + json.dumps(schools, separators=(",", ":"), ensure_ascii=False) + ";\n"
+    temporary = data_file.with_suffix(".js.tmp")
+    temporary.write_text(payload, encoding="utf-8")
+    temporary.replace(data_file)
+    return {"source": metadata, **report}
+
 
 def main():
-    cde, dataset_name = fetch_cde_magnets()
-    existing, old_metadata = load_existing()
-    merged, added, removed = merge(existing, [to_school(r) for r in cde])
-    metadata = {
-        'source': 'California Department of Education public school directory',
-        'dataset': dataset_name,
-        'retrievedAt': date.today().isoformat(),
-    }
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--csv", type=Path, help="Review a previously downloaded official CSV offline")
+    parser.add_argument("--dataset", help="Required with --csv, e.g. california-public-schools-2025-26")
+    parser.add_argument("--source-url", help="Original CSV download URL, required with --csv")
+    parser.add_argument("--checked-at", default=datetime.now(timezone.utc).date().isoformat())
+    parser.add_argument("--report", type=Path, default=BASE / "school-update-report.json")
+    args = parser.parse_args()
+    if args.csv:
+        if not args.dataset or not args.source_url:
+            parser.error("--csv requires --dataset and --source-url")
+        dataset, csv_url, raw = args.dataset, args.source_url, args.csv.read_bytes()
+    else:
+        dataset, csv_url = find_latest_dataset_csv()
+        raw = curl(csv_url)
+    parsed = urlsplit(csv_url)
+    if parsed.scheme != "https" or parsed.hostname not in {"gis.data.ca.gov", "data.ca.gov", "www.cde.ca.gov"}:
+        parser.error("CSV source must be an official CDE/California HTTPS URL")
+    report = refresh(raw, dataset, csv_url, args.checked_at)
+    args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(f"Validated {report['newCount']} school records from {dataset}; local files only. Review {args.report} before publishing.")
 
-    if not added and not removed and merged == existing and metadata['dataset'] == old_metadata.get('dataset'):
-        log('No changes — site already up to date.')
-        return
 
-    for n in added:   log(f'  + added:   {n}')
-    for n in removed: log(f'  - removed: {n}')
-    if not added and not removed:
-        log('School details changed (addresses/grades/coordinates)')
-
-    JS_FILE.write_text(
-        'const SCHOOL_DATA_SOURCE = ' + json.dumps(metadata, separators=(',', ':')) + ';\n'
-        + 'const SCHOOLS_DATA = ' + json.dumps(merged, separators=(',', ':')) + ';\n'
-    )
-    bump_cache_version()
-    log(f'schools_data.js updated: {len(merged)} schools '
-        f'({len(added)} added, {len(removed)} removed)')
-    deploy()
-
-if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        log(f'ERROR: {e}')
-        sys.exit(1)
+if __name__ == "__main__":
+    main()
