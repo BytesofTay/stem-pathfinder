@@ -1,391 +1,365 @@
-/* =========================================
-   LAUSD Magnet School Finder — Main App
-   ========================================= */
-
-const APPLY_URL = 'https://www.lausd.net/Page/460';
-const HIGH_GRADE = { K:'5','1':'5','4':'5','6':'8','7':'8','9':'12' };
-const FAV_KEY    = 'lausd_favorites';
+/* LAUSD Magnet School Finder — sourced directory, map, and shortlist. */
+const APPLY_URL = 'https://apply.lausd.net';
+const FAV_KEY = 'lausd_favorites';
 const FAV_MIGRATED_KEY = 'lausd_favorites_server_migrated';
 const FAV_PENDING_KEY = 'lausd_favorites_pending_sync';
+const COMPARE_KEY = 'stem_pathfinder_compare';
 
-let allSchools   = [];
-let favorites    = new Set();
-let mapInstance  = null;
-let currentTab   = 'list';
+let allSchools = [];
+let favorites = new Set();
+let compared = new Set();
+let mapInstance = null;
+let currentTab = 'list';
 let favoritesWriteQueue = Promise.resolve();
 
-const PROG_TYPES = [
-  { keys:['medical','health','biotech','bio-tech'],                           label:'🏥 Medical',     bg:'#FCE4EC',bd:'#F48FB1',tx:'#880E4F' },
-  { keys:['stem','science','math','engineering','tech','aerospace','technology','museum science'], label:'🔬 STEM',      bg:'#E3F2FD',bd:'#90CAF9',tx:'#0D47A1' },
-  { keys:['arts','performing','music','film','theater','drama','visual'],     label:'🎨 Arts',        bg:'#F3E5F5',bd:'#CE93D8',tx:'#6A1B9A' },
-  { keys:['journalism','media','communications'],                             label:'📰 Journalism',  bg:'#FFF8E1',bd:'#FFD54F',tx:'#E65100' },
-  { keys:['law','justice','social'],                                          label:'⚖️ Law',         bg:'#FBE9E7',bd:'#FFAB91',tx:'#BF360C' },
-  { keys:['environment','earth','ecology'],                                   label:'🌿 Environment', bg:'#E8F5E9',bd:'#A5D6A7',tx:'#1B5E20' },
-  { keys:['humanit','global','multicultural','world','awareness'],            label:'🌍 Humanities',  bg:'#E0F7FA',bd:'#80DEEA',tx:'#006064' },
-  { keys:['enriched','enrichment','gifted','magnet','preparatory'],           label:'★ Enriched',    bg:'#FFF9C4',bd:'#FFF176',tx:'#827717' },
-];
-
-/* ── Helpers ────────────────────────────── */
-const getProg     = n => { const l = n.toLowerCase(); for (const p of PROG_TYPES) if (p.keys.some(k => l.includes(k))) return p; return null; };
-const overall     = s => s.quality == null ? null : Math.round((s.quality + s.access + s.equity) / 3 * 10) / 10;
-const scCls       = n => n >= 8 ? 'high' : n >= 5 ? 'mid' : 'low';
-const fillCls     = n => 'fill-' + scCls(n);
-const gradeLabel  = l => t('gradesLabel', { low: l, high: HIGH_GRADE[l] || '12' });
-const mapsUrl     = a => 'https://maps.google.com/?q=' + encodeURIComponent(a + ', Los Angeles, CA');
-
-function scoreRow(label, score) {
-  const pct = (score / 10 * 100).toFixed(0);
-  return `<div class="score-row">
-    <span class="score-lbl">${label}</span>
-    <div class="score-track"><div class="score-fill ${fillCls(score)}" style="width:${pct}%"></div></div>
-    <span class="score-num" style="color:var(--${scCls(score)})">${score}/10</span>
-  </div>`;
+function tx(key, fallback, vars) {
+  const value = typeof t === 'function' ? t(key, vars) : key;
+  return value === key ? (fallback || key).replace(/\{(\w+)\}/g, (_, name) => vars && vars[name] != null ? vars[name] : '') : value;
+}
+function escapeHtml(value) { return SchoolUtils.escapeHtml(value); }
+function getProgramEvidence(school) {
+  return SchoolUtils.programEvidence(school, typeof PROGRAM_EVIDENCE === 'undefined' ? [] : PROGRAM_EVIDENCE);
+}
+function verifiedInterestsForSchool(school) {
+  return SchoolUtils.verifiedInterests(school, typeof PROGRAM_EVIDENCE === 'undefined' ? [] : PROGRAM_EVIDENCE);
+}
+function gradeLabel(school) {
+  const range = SchoolUtils.gradeRange(typeof school === 'object' ? school : { low_grade: school });
+  const label = grade => grade === -1 ? 'TK' : grade === 0 ? 'K' : String(grade);
+  if (range.known) return tx('gradesLabel', 'Grades {low}–{high}', { low: label(range.low), high: label(range.high) });
+  if (range.low !== null) return tx('gradesFromUnknown', 'Starts at {low}; upper grade unconfirmed', { low: label(range.low) });
+  return tx('gradesUnknown', 'Grade range unconfirmed');
+}
+function mapsUrl(address) { return 'https://maps.google.com/?q=' + encodeURIComponent(String(address || '')); }
+function safeLink(url, label, className) {
+  const safe = SchoolUtils.safeUrl(url);
+  return safe ? '<a class="' + escapeHtml(className || 'source-link') + '" href="' + escapeHtml(safe) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + ' ↗</a>' : '';
+}
+function schoolLocationHtml(school, className) {
+  const label = tx('campusAddress', 'Campus: {address}', {address:school.address});
+  if (getProgramEvidence(school).some(record => record.offCampus)) return '<span class="location-note">' + escapeHtml(label) + '</span>';
+  return safeLink(mapsUrl(school.address), label, className);
+}
+function interestLabel(interest) {
+  const keys = { science: 'intScience', tech: 'intTech', medical: 'intMedical', engineer: 'intEngineer', arts: 'intArts' };
+  return keys[interest] ? t(keys[interest]) : interest;
+}
+function schoolDetailsHtml(school, options) {
+  const evidence = getProgramEvidence(school);
+  const compact = options && options.compact;
+  const website = SchoolUtils.safeUrl(school.website || school.website_url);
+  const details = evidence.length ? evidence.map(record => {
+    const labels = (record.interests || []).map(interestLabel).map(escapeHtml).join(' · ');
+    const checked = record.checkedAt || record.verifiedAt;
+    const description = LANG === 'es' ? record.descriptionEs || record.description : record.description;
+    const eligibility = LANG === 'es' ? record.eligibilityNoteEs || record.eligibilityNote : record.eligibilityNote;
+    const locationNote = LANG === 'es' ? record.locationNoteEs || record.locationNote : record.locationNote;
+    return '<div class="program-evidence"><strong>' + escapeHtml(record.programName || tx('verifiedProgram', 'Reviewed program')) + '</strong>' +
+      (labels ? '<p class="program-interests">' + labels + '</p>' : '') +
+      (!compact && description ? '<p>' + escapeHtml(description) + '</p>' : '') +
+      (eligibility ? '<p class="eligibility-note">' + escapeHtml(eligibility) + '</p>' : '') +
+      (locationNote ? '<p class="location-note">' + escapeHtml(locationNote) + '</p>' : '') +
+      (record.eligibilitySourceUrl ? '<p>' + safeLink(record.eligibilitySourceUrl, tx('eligibility', 'Admission requirements')) + '</p>' : '') +
+      '<p class="source-meta">' + safeLink(record.sourceUrl, tx('sourceDetails', 'Official program source')) +
+      (checked ? ' · ' + escapeHtml(tx('sourceChecked', 'Checked {date}', { date: checked })) : '') + '</p></div>';
+  }).join('') : '<p class="program-unverified">' + escapeHtml(tx('programUnverified', 'Program interests and eligibility have not yet been reviewed. Check the official school page.')) + '</p>';
+  return details + (website ? '<p>' + safeLink(website, tx('officialSchool', 'Official school website')) + '</p>' : '');
 }
 
-function showToast(msg) {
-  document.querySelectorAll('.toast').forEach(t => t.remove());
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2800);
+function showToast(message) {
+  document.querySelectorAll('.toast').forEach(element => element.remove());
+  const element = document.createElement('div');
+  element.className = 'toast';
+  element.setAttribute('role', 'status');
+  element.textContent = message;
+  document.body.appendChild(element);
+  setTimeout(() => element.remove(), 2800);
 }
 
-/* ── Favorites ──────────────────────────── */
+/* Browser storage remains usable when the optional persistence API is unavailable. */
 async function loadFavorites() {
-  try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); }
-  catch { favorites = new Set(); }
   try {
-    const response = await fetch('/api/favorites', { credentials: 'same-origin' });
-    if (!response.ok) throw new Error('Favorites API unavailable');
+    const stored = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+    favorites = new Set(Array.isArray(stored) ? stored.filter(name => typeof name === 'string') : []);
+    const shortlist = JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]');
+    compared = new Set(Array.isArray(shortlist) ? shortlist.filter(name => typeof name === 'string').slice(0, 3) : []);
+  } catch { favorites = new Set(); compared = new Set(); }
+  updateFavBadge();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const response = await fetch('/api/favorites', { credentials: 'same-origin', signal: controller.signal });
+    if (!response.ok) throw new Error('Favorites unavailable');
     const data = await response.json();
     if (Array.isArray(data.favorites)) {
       const pending = localStorage.getItem(FAV_PENDING_KEY) === '1';
-      if (pending || (data.favorites.length === 0 && favorites.size && !localStorage.getItem(FAV_MIGRATED_KEY))) {
+      if (pending || (!data.favorites.length && favorites.size && !localStorage.getItem(FAV_MIGRATED_KEY))) {
         const migration = await fetch('/api/favorites', {
-          method: 'PUT', credentials: 'same-origin',
+          method: 'PUT', credentials: 'same-origin', signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ favorites: [...favorites] }),
         });
-        if (!migration.ok) throw new Error('Could not migrate browser favorites');
+        if (!migration.ok) throw new Error('Favorites migration unavailable');
         localStorage.setItem(FAV_MIGRATED_KEY, '1');
         localStorage.removeItem(FAV_PENDING_KEY);
       } else {
-        favorites = new Set(data.favorites);
+        favorites = new Set(data.favorites.filter(name => typeof name === 'string'));
         localStorage.setItem(FAV_MIGRATED_KEY, '1');
       }
       localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
     }
-  } catch { /* Keep browser storage available when the optional API is offline. */ }
+  } catch { /* Retain local favorites. */ }
+  finally { clearTimeout(timer); }
   updateFavBadge();
+  syncSchoolButtons();
+  if (currentTab === 'saved') renderSaved();
 }
-
 function saveFavorites() {
   const snapshot = JSON.stringify([...favorites]);
   localStorage.setItem(FAV_KEY, snapshot);
   localStorage.setItem(FAV_PENDING_KEY, '1');
   updateFavBadge();
   favoritesWriteQueue = favoritesWriteQueue.catch(() => {}).then(async () => {
-    const response = await fetch('/api/favorites', {
-      method: 'PUT', credentials: 'same-origin', keepalive: true,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ favorites: JSON.parse(snapshot) }),
-    });
-    if (!response.ok) throw new Error('Could not save favorites');
-    localStorage.setItem(FAV_MIGRATED_KEY, '1');
-    if (localStorage.getItem(FAV_KEY) === snapshot) localStorage.removeItem(FAV_PENDING_KEY);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'PUT', credentials: 'same-origin', keepalive: true, signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ favorites: JSON.parse(snapshot) }),
+      });
+      if (!response.ok) throw new Error('Favorites unavailable');
+      localStorage.setItem(FAV_MIGRATED_KEY, '1');
+      if (localStorage.getItem(FAV_KEY) === snapshot) localStorage.removeItem(FAV_PENDING_KEY);
+    } catch { /* The pending flag retries the latest browser selection next visit. */ }
+    finally { clearTimeout(timer); }
   });
 }
-
 function updateFavBadge() {
   const badge = document.getElementById('fav-badge');
   if (!badge) return;
   badge.textContent = favorites.size || '';
-  badge.className   = 'tab-badge' + (favorites.size ? '' : ' empty');
+  badge.className = 'tab-badge' + (favorites.size ? '' : ' empty');
   badge.style.display = favorites.size ? '' : 'none';
 }
-
-function toggleFavorite(name, btnEl) {
-  if (favorites.has(name)) {
-    favorites.delete(name);
-    if (btnEl) { btnEl.classList.remove('active'); btnEl.textContent = '🤍'; btnEl.setAttribute('aria-label','Save school'); }
-    showToast(t('removedToast'));
-  } else {
-    favorites.add(name);
-    if (btnEl) { btnEl.classList.add('active'); btnEl.textContent = '❤️'; btnEl.setAttribute('aria-label','Remove from saved'); }
-    showToast(t('savedToast'));
-  }
-  // Sync all other fav buttons for the same school
-  document.querySelectorAll(`.fav-btn`).forEach(b => {
-    if (b !== btnEl && b.closest('[data-school]')?.dataset.school === name) {
-      b.classList.toggle('active', favorites.has(name));
-      b.textContent = favorites.has(name) ? '❤️' : '🤍';
-    }
+function schoolActionButtons(school) {
+  const saved = favorites.has(school.name);
+  const selected = compared.has(school.name);
+  return '<button class="fav-btn ' + (saved ? 'active' : '') + '" data-action="favorite" data-school-name="' + escapeHtml(school.name) +
+    '" aria-pressed="' + saved + '" aria-label="' + escapeHtml(tx(saved ? 'removeSaved' : 'saveSchool', saved ? 'Remove from saved' : 'Save school')) + '">' + (saved ? '❤️' : '🤍') + '</button>' +
+    '<button class="compare-btn ' + (selected ? 'active' : '') + '" data-action="compare" data-school-name="' + escapeHtml(school.name) + '" aria-pressed="' + selected + '">' +
+    escapeHtml(tx(selected ? 'removeCompare' : 'compare', selected ? 'Remove from comparison' : 'Compare')) + '</button>';
+}
+function syncSchoolButtons() {
+  document.querySelectorAll('[data-action="favorite"]').forEach(button => {
+    const active = favorites.has(button.dataset.schoolName);
+    button.classList.toggle('active', active);
+    button.textContent = active ? '❤️' : '🤍';
+    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-label', tx(active ? 'removeSaved' : 'saveSchool', active ? 'Remove from saved' : 'Save school'));
   });
+  document.querySelectorAll('[data-action="compare"]').forEach(button => {
+    const active = compared.has(button.dataset.schoolName);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    button.textContent = tx(active ? 'removeCompare' : 'compare', active ? 'Remove from comparison' : 'Compare');
+  });
+}
+function toggleFavorite(name) {
+  if (!allSchools.some(school => school.name === name)) return;
+  if (favorites.has(name)) { favorites.delete(name); showToast(t('removedToast')); }
+  else { favorites.add(name); showToast(t('savedToast')); }
   saveFavorites();
+  syncSchoolButtons();
   if (currentTab === 'saved') renderSaved();
 }
-
+function toggleCompare(name) {
+  if (!allSchools.some(school => school.name === name)) return;
+  if (compared.has(name)) { compared.delete(name); showToast(tx('compareRemoved', 'Removed from comparison.')); }
+  else {
+    if (compared.size >= 3) { showToast(tx('compareLimit', 'Compare up to three schools. Remove one first.')); return; }
+    compared.add(name);
+    showToast(tx('compareAdded', 'Added to comparison. Open Saved to compare.'));
+  }
+  localStorage.setItem(COMPARE_KEY, JSON.stringify([...compared]));
+  if (location.hash.startsWith('#shortlist/')) {
+    history.replaceState(null, '', '#shortlist/' + encodeURIComponent(JSON.stringify([...compared])));
+  }
+  syncSchoolButtons();
+  if (currentTab === 'saved') renderSaved();
+}
+function comparisonHtml() {
+  const schools = allSchools.filter(school => compared.has(school.name));
+  return '<section class="comparison-panel" id="comparison-panel" aria-label="' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '">' +
+    '<div class="comparison-heading"><h2>' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '</h2>' +
+    '<p>' + escapeHtml(tx('compareHint', 'Choose up to three schools. Confirm the specific magnet program, grade eligibility, and transportation with LAUSD.')) + '</p></div>' +
+    (schools.length ? '<div class="comparison-actions"><button data-action="print-shortlist">' + escapeHtml(tx('printShortlist', 'Print shortlist')) + '</button>' +
+      '<button data-action="share-shortlist">' + escapeHtml(tx('shareShortlist', 'Share shortlist')) + '</button></div><div class="comparison-grid">' +
+      schools.map(school => '<article class="comparison-card"><h3>' + escapeHtml(school.name) + '</h3><p>' + escapeHtml(gradeLabel(school)) +
+        '</p><p>' + schoolLocationHtml(school, 'map-link') + '</p>' + schoolDetailsHtml(school) +
+        '<button data-action="compare" data-school-name="' + escapeHtml(school.name) + '">' + escapeHtml(tx('removeCompare', 'Remove from comparison')) + '</button></article>').join('') + '</div>' :
+      '<p>' + escapeHtml(tx('compareEmpty', 'Use Compare on a school card to build your shortlist.')) + '</p>') + '</section>';
+}
 function renderSaved() {
   const panel = document.getElementById('saved-panel');
   if (!panel) return;
-  const saved = allSchools.filter(s => favorites.has(s.name));
-  if (saved.length === 0) {
-    panel.innerHTML = `<div class="saved-empty">
-      <div class="icon">🤍</div>
-      <h3>${t('noSaved')}</h3>
-      <p>${t('noSavedHint')}</p>
-    </div>`;
-    return;
+  const saved = allSchools.filter(school => favorites.has(school.name));
+  panel.innerHTML = comparisonHtml() + (saved.length ? '<h2>' + escapeHtml(t('savedSchoolsHeading')) + '</h2><div class="list">' +
+    saved.map(renderCard).join('') + '</div>' : '<div class="saved-empty"><h3>' + escapeHtml(t('noSaved')) + '</h3><p>' + escapeHtml(t('noSavedHint')) + '</p></div>');
+}
+async function copyLink(url, successKey) {
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast(tx(successKey, 'Link copied.'));
+  } catch {
+    window.prompt(tx('copyLink', 'Copy this link:'), url);
   }
-  panel.innerHTML = `<div class="list">
-    ${saved.map((s, i) => renderCard(s, i)).join('')}
-  </div>`;
+}
+function shareShortlist() {
+  const names = [...compared].filter(name => allSchools.some(school => school.name === name));
+  const url = new URL(location.href);
+  url.hash = '#shortlist/' + encodeURIComponent(JSON.stringify(names));
+  return copyLink(url.href, 'shortlistCopied');
+}
+function printShortlist() {
+  document.body.classList.add('print-shortlist');
+  window.print();
+  document.body.classList.remove('print-shortlist');
+}
+function initShortlistFromURL() {
+  if (!location.hash.startsWith('#shortlist/')) return false;
+  try {
+    const names = JSON.parse(decodeURIComponent(location.hash.slice('#shortlist/'.length)));
+    if (!Array.isArray(names)) return false;
+    compared = new Set(names.filter(name => typeof name === 'string' && allSchools.some(school => school.name === name)).slice(0, 3));
+    localStorage.setItem(COMPARE_KEY, JSON.stringify([...compared]));
+    switchTab('saved');
+    return true;
+  } catch { return false; }
 }
 
-/* ── Tabs ───────────────────────────────── */
 function switchTab(tab) {
+  if (!['list', 'map', 'saved'].includes(tab)) return;
   currentTab = tab;
   show('browse-section');
-  ['list','map','saved'].forEach(t => {
-    const btn   = document.getElementById('tab-' + t);
-    const panel = document.getElementById(t === 'list' ? 'list-panel' : t + '-panel');
-    if (btn)   btn.classList.toggle('active', t === tab);
-    if (panel) panel.classList.toggle('active', t === tab);
+  ['list', 'map', 'saved'].forEach(name => {
+    const button = document.getElementById('tab-' + name);
+    const panel = document.getElementById(name + '-panel');
+    if (button) { button.classList.toggle('active', name === tab); button.setAttribute('aria-selected', String(name === tab)); }
+    if (panel) panel.classList.toggle('active', name === tab);
   });
-  const filterBar = document.getElementById('filter-bar');
-  const countBar  = document.getElementById('count-bar');
-  if (filterBar) filterBar.style.display = tab === 'list' ? '' : 'none';
-  if (countBar)  countBar.style.display  = tab === 'list' ? '' : 'none';
-  if (tab === 'map')   initMap();
+  ['filter-bar', 'count-bar'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.style.display = tab === 'list' ? '' : 'none';
+  });
+  if (tab === 'map') initMap();
   if (tab === 'saved') renderSaved();
-  setTimeout(() => document.getElementById('browse-divider').scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+  document.getElementById('browse-divider')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-
-/* ── Map ────────────────────────────────── */
 function initMap() {
-  if (!window.L) return;
-  const mapEl = document.getElementById('school-map');
-  if (!mapEl) return;
-
-  // Check if schools have geocoded data
-  const geocoded = allSchools.filter(s => s.lat && s.lng);
-  const noDataEl = document.getElementById('map-no-data');
-
-  if (geocoded.length === 0) {
-    if (noDataEl) noDataEl.style.display = 'flex';
+  const notice = document.getElementById('map-no-data');
+  if (!window.L) {
+    if (notice) { notice.style.display = 'flex'; notice.textContent = tx('mapUnavailable', 'The map could not load. Use the school list and directions links.'); }
     return;
   }
-  if (noDataEl) noDataEl.style.display = 'none';
-
-  if (mapInstance) {
-    mapInstance.invalidateSize();
+  const geocoded = allSchools.filter(school => Number.isFinite(school.lat) && Number.isFinite(school.lng));
+  if (!geocoded.length) {
+    if (notice) { notice.style.display = 'flex'; notice.textContent = tx('mapUnavailable', 'School locations are unavailable. Use the school list.'); }
     return;
   }
-
-  mapInstance = L.map('school-map').setView([34.05, -118.25], 11);
-
+  if (notice) notice.style.display = 'none';
+  if (mapInstance) { mapInstance.invalidateSize(); return; }
+  mapInstance = L.map('school-map').setView([34.05, -118.25], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 18,
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>', maxZoom: 18,
   }).addTo(mapInstance);
-
-  const colorFor = ov => {
-    if (ov == null) return '#78909c';
-    if (ov >= 8)   return '#2E7D32';
-    if (ov >= 5)   return '#E65100';
-    return '#C62828';
-  };
-
-  geocoded.forEach(s => {
-    const ov = overall(s);
-    const color = colorFor(ov);
-    const marker = L.circleMarker([s.lat, s.lng], {
-      radius: 7, fillColor: color, color: '#fff',
-      weight: 1.5, opacity: 1, fillOpacity: 0.85,
+  const markers = [];
+  geocoded.forEach(school => {
+    const marker = L.circleMarker([school.lat, school.lng], {
+      radius: 7, fillColor: '#1565C0', color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.85,
     }).addTo(mapInstance);
-
-    const p = getProg(s.name);
-    marker.bindPopup(`
-      <div class="map-popup-name">${s.name}</div>
-      <div class="map-popup-grade">${gradeLabel(s.low_grade)}${p ? ' · ' + p.label : ''}</div>
-      <div class="map-popup-scores">
-        ⭐ ${t('mapOverall')}: <strong>${ov || '?'}/10</strong><br>
-        🎓 ${t('quality')}: ${s.quality || '?'}/10 &nbsp;
-        🚪 ${t('access')}: ${s.access || '?'}/10 &nbsp;
-        ⚖️ ${t('equity')}: ${s.equity || '?'}/10
-      </div>
-      <a class="map-popup-link" href="${APPLY_URL}" target="_blank" rel="noopener">${t('applyNow')}</a>
-      &nbsp;
-      <a class="map-popup-link" href="${mapsUrl(s.address)}" target="_blank" rel="noopener" style="background:#546E7A">${t('directions')}</a>
-    `, { maxWidth: 260 });
+    marker.bindPopup('<div class="map-popup-name">' + escapeHtml(school.name) + '</div><p>' + escapeHtml(gradeLabel(school)) +
+      '</p>' + schoolDetailsHtml(school, { compact: true }) + '<p>' + schoolLocationHtml(school) +
+      '</p><p class="source-meta">' + escapeHtml(tx('mapCampusNotice', 'Campus location from the school directory. A magnet program may meet elsewhere; verify with the program.')) +
+      '</p><div class="school-actions">' + schoolActionButtons(school) + '</div>', { maxWidth: 300 });
+    marker.on('popupopen', syncSchoolButtons);
+    markers.push([school.lat, school.lng]);
   });
-
-  // Legend
-  const legend = L.control({ position: 'bottomright' });
-  legend.onAdd = () => {
-    const div = L.DomUtil.create('div', '');
-    div.style.cssText = 'background:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,.15)';
-    div.innerHTML = `<strong style="display:block;margin-bottom:4px">${t('mapScore')}</strong>
-      <span style="color:#2E7D32">●</span> ${t('mapHigh')}<br>
-      <span style="color:#E65100">●</span> ${t('mapMid')}<br>
-      <span style="color:#C62828">●</span> ${t('mapLow')}`;
-    return div;
-  };
-  legend.addTo(mapInstance);
-
-  setTimeout(() => mapInstance.invalidateSize(), 200);
+  if (markers.length) mapInstance.fitBounds(markers, { padding: [24, 24] });
+  setTimeout(() => mapInstance.invalidateSize(), 100);
 }
-
-/* ── Browse ─────────────────────────────── */
-function renderCard(s, idx) {
-  const ov  = overall(s);
-  const p   = getProg(s.name);
-  const badge = p ? `<span class="prog-badge" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">${p.label}</span>` : '';
-  const oc    = ov != null ? scCls(ov) : '';
-  const circ  = ov != null
-    ? `<div class="overall ${oc}" aria-label="Overall score ${ov} out of 10"><span class="overall-n">${ov}</span><span class="overall-d">/10</span></div>`
-    : '';
-  const sc = s.quality != null
-    ? `<div class="scores">${scoreRow(t('quality'),s.quality)}${scoreRow(t('access'),s.access)}${scoreRow(t('equity'),s.equity)}</div>`
-    : `<span style="font-size:12px;color:var(--text-sub)">${t('notScored')}</span>`;
-  const favActive = favorites.has(s.name);
-
-  return `<div class="card" style="animation-delay:${Math.min(idx,20)*28}ms" data-school="${s.name.replace(/"/g,'&quot;')}">
-    <div class="card-header">
-      <div class="card-main">
-        <div class="card-name">${s.name}</div>
-        <div class="card-meta">
-          <span class="meta-item meta-grade">🎓 ${gradeLabel(s.low_grade)}</span>
-          <span class="meta-item">📍 <a class="map-link" href="${mapsUrl(s.address)}" target="_blank" rel="noopener noreferrer">${s.address}</a></span>
-          ${badge}
-        </div>
-        ${sc}
-      </div>
-      <div class="card-right">
-        ${circ}
-        <button class="fav-btn ${favActive ? 'active' : ''}"
-                onclick="toggleFavorite('${s.name.replace(/'/g,"\\'")}',this)"
-                aria-label="${favActive ? 'Remove from saved' : 'Save school'}"
-                title="${favActive ? 'Saved' : 'Save for later'}">
-          ${favActive ? '❤️' : '🤍'}
-        </button>
-      </div>
-    </div>
-  </div>`;
+function renderCard(school, index) {
+  return '<article class="card" data-school="' + escapeHtml(school.name) + '"><div class="card-header"><div class="card-main">' +
+    '<h3 class="card-name">' + escapeHtml(school.name) + '</h3><div class="card-meta"><span class="meta-item meta-grade">' +
+    escapeHtml(gradeLabel(school)) + '</span><span class="meta-item">' + schoolLocationHtml(school, 'map-link') +
+    '</span></div>' + schoolDetailsHtml(school) + '</div><div class="card-right">' + schoolActionButtons(school) + '</div></div></article>';
 }
-
-let statsOpen = false;
-function toggleStats() {
-  statsOpen = !statsOpen;
-  document.getElementById('stats-bar').classList.toggle('collapsed', !statsOpen);
-  const btn = document.getElementById('stats-toggle-btn');
-  btn.textContent = statsOpen ? t('hideStats') : t('showStats');
-  btn.setAttribute('aria-expanded', String(statsOpen));
-}
-
-function updateStats(schools) {
-  const sc = schools.filter(s => s.quality != null);
-  if (!sc.length) return;
-  const avg   = k => (sc.reduce((a,s) => a + s[k], 0) / sc.length).toFixed(1);
-  const avgOv = (sc.reduce((a,s) => a + overall(s), 0) / sc.length).toFixed(1);
-  ['quality','access','equity'].forEach(k => document.getElementById('avg-' + k).textContent = avg(k));
-  document.getElementById('avg-overall').textContent = avgOv;
-}
-
 function activeFC() {
-  let n = 0;
-  if (document.getElementById('search').value.trim()) n++;
-  if (document.getElementById('grade-filter').value) n++;
-  if (document.getElementById('sort').value !== 'name') n++;
-  return n;
+  return Number(Boolean(document.getElementById('search')?.value.trim())) + Number(Boolean(document.getElementById('grade-filter')?.value));
 }
-
+let filterTimer;
+function queueFilters() { clearTimeout(filterTimer); filterTimer = setTimeout(applyFilters, 150); }
 function applyFilters() {
-  const q = document.getElementById('search').value.toLowerCase().trim();
-  const g = document.getElementById('grade-filter').value;
-  const s = document.getElementById('sort').value;
-  let list = allSchools.filter(sc =>
-    (!q || sc.name.toLowerCase().includes(q) || sc.address.toLowerCase().includes(q)) &&
-    (!g || sc.low_grade === g)
-  );
-  if (s === 'name')    list.sort((a,b) => a.name.localeCompare(b.name));
-  if (s === 'overall') list.sort((a,b) => (overall(b)||0) - (overall(a)||0));
-  if (s === 'quality') list.sort((a,b) => (b.quality||0) - (a.quality||0));
-  if (s === 'access')  list.sort((a,b) => (b.access||0)  - (a.access||0));
-  if (s === 'equity')  list.sort((a,b) => (b.equity||0)  - (a.equity||0));
-
-  document.getElementById('count-label').textContent = list.length === allSchools.length
-    ? t('showingAll', { n: allSchools.length })
-    : t('showingSome', { n: list.length, total: allSchools.length });
-
-  const fc = activeFC();
-  document.getElementById('clear-btn').classList.toggle('show', fc > 0);
-  document.getElementById('fc-badge').textContent = fc;
-
-  ['quality','access','equity','overall'].forEach(k =>
-    document.getElementById('stat-' + k).classList.toggle('active', s === k)
-  );
-
-  document.getElementById('list-content').innerHTML = list.length === 0
-    ? `<div class="no-results"><div class="icon">🔍</div><p>${t('noFilterResults')}</p><button class="btn-primary" onclick="clearFilters()" style="margin:0 auto">${t('clearFilters')}</button></div>`
-    : `<div class="list">${list.map((sc, i) => renderCard(sc, i)).join('')}</div>`;
+  const query = (document.getElementById('search')?.value || '').toLowerCase().trim();
+  const grade = document.getElementById('grade-filter')?.value || '';
+  const list = allSchools.filter(school => {
+    const evidenceText = getProgramEvidence(school).map(record => [record.programName, record.description, record.descriptionEs].join(' ')).join(' ');
+    return (!query || [school.name, school.address, evidenceText].join(' ').toLowerCase().includes(query)) &&
+      (!grade || SchoolUtils.servesGrade(school, grade));
+  }).sort((a, b) => a.name.localeCompare(b.name));
+  const countLabel = document.getElementById('count-label');
+  if (countLabel) countLabel.textContent = list.length === allSchools.length ? t('showingAll', { n: allSchools.length }) : t('showingSome', { n: list.length, total: allSchools.length });
+  const count = activeFC();
+  document.getElementById('clear-btn')?.classList.toggle('show', count > 0);
+  const badge = document.getElementById('fc-badge');
+  if (badge) badge.textContent = count;
+  const content = document.getElementById('list-content');
+  if (content) content.innerHTML = list.length ? '<div class="list">' + list.map(renderCard).join('') + '</div>' :
+    '<div class="no-results"><p>' + escapeHtml(t('noFilterResults')) + '</p><button class="btn-primary" data-action="clear-filters">' + escapeHtml(t('clearFilters')) + '</button></div>';
 }
-
-function sortBy(k)     { document.getElementById('sort').value = k; applyFilters(); }
 function clearFilters() {
-  document.getElementById('search').value = '';
-  document.getElementById('grade-filter').value = '';
-  document.getElementById('sort').value = 'name';
+  const search = document.getElementById('search');
+  const grade = document.getElementById('grade-filter');
+  if (search) search.value = '';
+  if (grade) grade.value = '';
   applyFilters();
 }
-
-/* ── View helpers ───────────────────────── */
-function show(id, d = 'block') { const el = document.getElementById(id); if (el) el.style.display = d; }
-function hide(id)               { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
-function scrollTop()            { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
+function show(id, display) { const element = document.getElementById(id); if (element) element.style.display = display || 'block'; }
+function hide(id) { const element = document.getElementById(id); if (element) element.style.display = 'none'; }
+function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 function showHero() {
-  show('hero-section');
-  hide('quiz-panel');
-  hide('results-panel');
-  document.getElementById('quiz-panel').classList.remove('active');
-  document.getElementById('results-panel').classList.remove('active');
-  history.replaceState(null, '', location.pathname);
+  show('hero-section'); hide('quiz-panel'); hide('results-panel'); hide('browse-section');
+  document.getElementById('quiz-panel')?.classList.remove('active');
+  document.getElementById('results-panel')?.classList.remove('active');
+  history.replaceState(null, '', location.pathname + location.search);
   scrollTop();
 }
-
-function scrollToBrowse() {
-  show('browse-section');
-  switchTab('list');
-}
-
-function openModal()  { document.getElementById('modal').classList.add('open'); }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-
-/* ── Data loading ───────────────────────── */
+function scrollToBrowse() { switchTab('list'); }
+function openModal() { document.getElementById('modal')?.classList.add('open'); }
+function closeModal() { document.getElementById('modal')?.classList.remove('open'); }
 async function loadSchools() {
-  allSchools = SCHOOLS_DATA;
+  allSchools = typeof SCHOOLS_DATA === 'undefined' ? [] : SCHOOLS_DATA;
   hide('offline-pill');
-  updateStats(allSchools);
   applyFilters();
 }
-
-/* ── Init ───────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
   document.documentElement.lang = LANG;
   applyStaticI18n();
-  await loadFavorites();
-  loadSchools().then(() => {
-    if (!initFromURL()) {
-      // Normal load — show hero
-    }
+  /* Data renders immediately; an unavailable optional API cannot hold the finder blank. */
+  await loadSchools();
+  const favoritesReady = loadFavorites();
+  if (!initShortlistFromURL()) initFromURL();
+  document.addEventListener('click', event => {
+    const target = event.target.closest('[data-action]');
+    if (!target) return;
+    const action = target.dataset.action;
+    if (action === 'favorite') toggleFavorite(target.dataset.schoolName);
+    if (action === 'compare') toggleCompare(target.dataset.schoolName);
+    if (action === 'print-shortlist') printShortlist();
+    if (action === 'share-shortlist') shareShortlist();
+    if (action === 'clear-filters') clearFilters();
   });
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      closeModal();
-      if (chatOpen) toggleChat();
-    }
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { closeModal(); if (typeof chatOpen !== 'undefined' && chatOpen) toggleChat(); }
   });
+  await favoritesReady;
 });

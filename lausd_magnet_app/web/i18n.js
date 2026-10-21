@@ -1,392 +1,458 @@
-/* =========================================
-   Internationalization — English / Español
-   ========================================= */
-
 const I18N = {
-  en: {
-    /* Appbar */
-    home: '🏠 Home',
-    browseAll: 'Browse all schools',
-    cachedData: 'Using cached data',
-    sourceSnapshotKnown: 'Directory snapshot: {date}.',
-    sourceSnapshotUnknown: 'Directory snapshot date is not recorded.',
-
-    /* Hero */
-    heroEyebrow: 'A free tool from The STEM in Me',
-    heroTitle: 'Find the right <em>STEM school</em><br>for your child',
-    heroSub: "Answer 3 quick questions to explore LAUSD magnet programs that may fit your child's grade and interests.",
-    getStarted: 'Get Started →',
-    heroAlt: 'Already know what you want?',
-    heroAltLink: 'Browse all 180 schools ↓',
-
-    /* Quiz */
-    stepOf: 'Step {n} of {total}',
-    back: '← Back',
-    next: 'Next →',
-    seeMatches: 'See my matches ✓',
-    q1: 'What grade is your child in?',
-    q1hint: "We'll show schools in their grade group. Confirm eligibility with LAUSD.",
-    q1optElem: 'Elementary', q1subElem: 'Grades K – 5',
-    q1optMid: 'Middle School', q1subMid: 'Grades 6 – 8',
-    q1optHigh: 'High School', q1subHigh: 'Grades 9 – 12',
-    q2: 'What is your child most excited about?',
-    q2hint: 'Pick as many as you like. Interest matches are inferred from school names.',
-    q2optScience: 'Science & Nature', q2subScience: 'Biology, environment, earth science',
-    q2optTech: 'Computers & Technology', q2subTech: 'Coding, robotics, digital media',
-    q2optMedical: 'Medicine & Health', q2subMedical: 'Biotech, pre-med, health sciences',
-    q2optEngineer: 'Engineering & Building', q2subEngineer: 'Aerospace, architecture, math',
-    q2optArts: 'Art + STEM', q2subArts: 'Design, film, creative technology',
-    q2optAny: 'Not sure yet', q2subAny: 'Show me programs across STEM interests',
-    q3: 'What matters most to you?',
-    q3hint: "We'll use this to rank your matches.",
-    q3optQuality: 'Program focus', q3subQuality: 'Sort by an experimental program estimate',
-    q3optAccess: 'Listed grade range', q3subAccess: 'Sort by an estimate based on listed grades',
-    q3optEquity: 'Community context', q3subEquity: 'Sort by an experimental demographic estimate',
-
-    /* Results */
-    topMatches: '🎯 Your top matches',
-    resultsFor: 'For a {grade} interested in {interests}',
-    schoolsFound: '{n} schools found',
-    shareResults: '📤 Share results',
-    showMore: 'Show {n} more schools ↓',
-    startOver: '↺ Start over',
-    browseAllArrow: 'Browse all 180 schools →',
-    applyNow: 'Apply Now →',
-    noMatches: 'No schools in this grade group matched those interests by name. Choose another interest or “Not sure yet.” Confirm program details with LAUSD.',
-    changeInterests: 'Change interests',
-    linkCopied: '🔗 Link copied to clipboard!',
-    gradeElem: 'elementary schooler', gradeMid: 'middle schooler', gradeHigh: 'high schooler',
-    intScience: 'Science & Nature', intTech: 'Computers & Technology', intMedical: 'Medicine & Health',
-    intEngineer: 'Engineering & Building', intArts: 'Art + STEM', intAny: 'All STEM programs',
-
-    /* Why blurbs */
-    whyProgram: '{icon} <strong>{prog} program</strong> — listed as serving {grades}. Confirm current details with the school.',
-    whySolid: '🎓 Listed as serving {grades}. Experimental comparison estimate: {score}/10; not a verified quality rating.',
-
-    /* Browse */
-    browseSchools: 'Browse schools',
-    showStats: '▸ Show district averages',
-    hideStats: '▾ Hide district averages',
-    avgQuality: 'Avg Quality', avgAccess: 'Avg Access', avgEquity: 'Avg Equity', avgOverall: 'Avg Overall',
-    statQualitySub: 'Program rigor', statAccessSub: 'Enrollment reach', statEquitySub: 'Underserved pop.', statOverallSub: 'Combined',
-    tabList: '📋 List', tabMap: '🗺️ Map', tabSaved: '❤️ Saved',
-    search: 'Search', grade: 'Grade', sort: 'Sort',
-    searchPlaceholder: 'School name or address…',
-    allGrades: 'All grades',
-    gradeK: 'K – Elementary', grade1: 'Grade 1', grade4: 'Grade 4',
-    grade6: 'Grade 6 – Middle', grade7: 'Grade 7', grade9: 'Grade 9 – High School',
-    sortName: 'Name A–Z', sortOverall: 'Overall ↓', sortQuality: 'Quality ↓', sortAccess: 'Access ↓', sortEquity: 'Equity ↓',
-    clear: '✕ Clear',
-    scoreGuide: 'ⓘ Score guide',
-    showingAll: 'Showing all {n} magnet schools',
-    showingSome: '{n} of {total} schools',
-    noFilterResults: 'No schools match your filters.',
-    clearFilters: '✕ Clear filters',
-    notScored: 'Not yet scored',
-    topRated: '⭐ Top Rated', highEquity: '🏅 High Equity',
-    gradesLabel: 'Grades {low}–{high}',
-    quality: 'Quality', access: 'Access', equity: 'Equity',
-
-    /* Saved */
-    noSaved: 'No saved schools yet',
-    noSavedHint: 'Tap the heart icon on any school to save it here for easy comparison later.',
-    savedToast: '❤️ Saved! Find it in the Saved tab.',
-    removedToast: 'Removed from saved schools',
-
-    /* Map */
-    mapScore: 'Score', mapHigh: '8–10 High', mapMid: '5–7 Mid', mapLow: '1–4 Low',
-    mapOverall: 'Overall', directions: '📍 Directions',
-
-    /* Modal */
-    modalTitle: '📊 How schools are scored',
-    modalQuality: 'Quality (1–10)',
-    modalQualityTxt: 'Experimental estimate based on available school-directory fields. It is not a verified measure of program quality.',
-    modalAccess: 'Access (1–10)',
-    modalAccessTxt: 'Experimental estimate based on listed grade ranges. Confirm eligibility and application details with the school.',
-    modalEquity: 'Equity (1–10)',
-    modalEquityTxt: 'Experimental estimate only. It does not measure inclusion, student support, or school-level equity outcomes.',
-    gotIt: 'Got it',
-
-    /* Chat */
-    chatFab: 'Help',
-    chatName: 'School Helper',
-    chatStatus: 'Here to help LAUSD families',
-    chatPlaceholder: 'Ask me anything…',
-    chatWelcome: `Hi! 👋 I'm here to help you find the right STEM magnet school for your child.\n\nYou can ask me things like:<br>• "Find STEM schools for a 7th grader"<br>• "What are the top medical programs?"<br>• "How do I apply?"`,
-    qrFind: '🔍 Find my school', qrApply: '📋 How to apply', qrScores: '❓ What do scores mean', qrBrowse: '🏫 Browse all schools',
-
-    /* About / Footer */
-    aboutTitle: 'About The STEM in Me',
-    aboutP1: 'The LAUSD magnet lottery is one of the best paths into strong STEM programs for kids in Los Angeles — but the system is confusing, the deadlines are strict, and the families who would benefit most often have no one to help them navigate it.',
-    aboutP2: '<strong>The STEM in Me</strong> exists to change that. <strong>STEM Pathfinder</strong>, our free finder tool, covers all 180 LAUSD magnet schools so any parent can search, compare, and find the right program for their child — no login, no cost, no catch. During application season (November–February) we also help families complete their applications in person.',
-    aboutContact: '📧 Get in touch — workshops, volunteering, or questions',
-    footerTagline: 'Helping LA kids find their path into STEM.',
-    footerContact: 'Contact', footerApply: 'LAUSD Application', footerSource: 'CDE school data', footerScores: 'How scores work',
-    footerDisclaimer: 'The STEM in Me is an independent community project and is not affiliated with or endorsed by the Los Angeles Unified School District. School directory data comes from the California Department of Education. Scores are experimental estimates, not verified ratings — always visit schools and verify details before applying.',
-    footerCopy: '© 2026 The STEM in Me · Made with ❤️ in Los Angeles',
+  "en": {
+    "home": "🏠 Home",
+    "browseAll": "Browse all schools",
+    "cachedData": "Using cached data",
+    "sourceSnapshotKnown": "Directory retrieved: {date}.",
+    "sourceSnapshotUnknown": "Directory snapshot date is not recorded.",
+    "heroEyebrow": "A free tool from The STEM in Me",
+    "heroTitle": "Find the right <em>STEM school</em><br>for your child",
+    "heroSub": "Answer 2 questions, explore sourced program details, and build a school shortlist.",
+    "getStarted": "Get Started →",
+    "heroAlt": "Already know what you want?",
+    "heroAltLink": "Browse the school directory ↓",
+    "stepOf": "Step {n} of {total}",
+    "back": "← Back",
+    "next": "Next →",
+    "seeMatches": "See my matches ✓",
+    "q1": "What grade will your child enter?",
+    "q1hint": "Choose the grade for the school year you are applying for. Listed grades do not guarantee admission.",
+    "q1optElem": "Elementary",
+    "q1subElem": "Grades K – 5",
+    "q1optMid": "Middle School",
+    "q1subMid": "Grades 6 – 8",
+    "q1optHigh": "High School",
+    "q1subHigh": "Grades 9 – 12",
+    "q2": "What is your child most excited about?",
+    "q2hint": "Pick as many as you like. Interest matches use program details checked on official school pages. Unreviewed schools are still in Browse.",
+    "q2optScience": "Science & Nature",
+    "q2subScience": "Biology, environment, earth science",
+    "q2optTech": "Computers & Technology",
+    "q2subTech": "Coding, robotics, digital media",
+    "q2optMedical": "Medicine & Health",
+    "q2subMedical": "Biotech, pre-med, health sciences",
+    "q2optEngineer": "Engineering & Building",
+    "q2subEngineer": "Aerospace, architecture, math",
+    "q2optArts": "Art + STEM",
+    "q2subArts": "Design, film, creative technology",
+    "q2optAny": "Not sure yet",
+    "q2subAny": "Show me programs across STEM interests",
+    "topMatches": "🎯 Schools for your grade and interests",
+    "resultsFor": "Entry grade: {grade} · Interests: {interests}",
+    "schoolsFound": "{n} schools found",
+    "shareResults": "📤 Share results",
+    "showMore": "Show {n} more schools ↓",
+    "startOver": "↺ Start over",
+    "browseAllArrow": "Browse the school directory →",
+    "applyNow": "Apply Now →",
+    "noMatches": "No reviewed program matches this grade and interest yet. Our program review is still growing. Choose “Not sure yet” or browse the full directory.",
+    "changeInterests": "Change interests",
+    "linkCopied": "🔗 Link copied to clipboard!",
+    "gradeElem": "elementary schooler",
+    "gradeMid": "middle schooler",
+    "gradeHigh": "high schooler",
+    "intScience": "Science & Nature",
+    "intTech": "Computers & Technology",
+    "intMedical": "Medicine & Health",
+    "intEngineer": "Engineering & Building",
+    "intArts": "Art + STEM",
+    "intAny": "All interests",
+    "whyNameMatches": "Listed as serving {grades}. The school name matched these interest search terms: {interests}. This does not confirm the current curriculum; check with the school.",
+    "whyGradeMatch": "The directory lists {grades}. Check the specific program’s entry grades and admission requirements with the school.",
+    "browseSchools": "Browse schools",
+    "tabList": "📋 List",
+    "tabMap": "🗺️ Map",
+    "tabSaved": "❤️ Saved & compare",
+    "search": "Search",
+    "grade": "Grade",
+    "sort": "Sort",
+    "searchPlaceholder": "School name or address…",
+    "allGrades": "All grades",
+    "gradeK": "K – Elementary",
+    "grade1": "Grade 1",
+    "grade4": "Grade 4",
+    "grade6": "Grade 6 – Middle",
+    "grade7": "Grade 7",
+    "grade9": "Grade 9 – High School",
+    "sortName": "Name A–Z",
+    "clear": "✕ Clear",
+    "scoreGuide": "ⓘ About the data",
+    "showingAll": "Showing all {n} magnet schools",
+    "showingSome": "{n} of {total} schools",
+    "noFilterResults": "No schools match your filters.",
+    "clearFilters": "✕ Clear filters",
+    "gradesLabel": "Campus grades {low}–{high}",
+    "noSaved": "No saved schools yet",
+    "noSavedHint": "Tap the heart icon on any school to save it here for easy comparison later.",
+    "savedToast": "❤️ Saved! Find it in the Saved tab.",
+    "removedToast": "Removed from saved schools",
+    "directions": "📍 Directions",
+    "modalTitle": "How to read this directory",
+    "modalQuality": "Directory facts",
+    "modalQualityTxt": "Grades, addresses, websites and school identifiers come from the dated CDE directory. A school can have multiple programs with different requirements.",
+    "modalAccess": "Reviewed program details",
+    "modalAccessTxt": "Reviewed interests link to an official school page and a checked date. They describe the published program, not school quality or guaranteed availability.",
+    "modalEquity": "Still to check",
+    "modalEquityTxt": "“Program details not yet reviewed” means we have not added a source for this school. It does not mean the school lacks a STEM program. Confirm entry grades, eligibility and transport with the school.",
+    "gotIt": "Got it",
+    "chatFab": "Help",
+    "chatName": "School Helper",
+    "chatStatus": "Here to help LAUSD families",
+    "chatPlaceholder": "Ask me anything…",
+    "chatWelcome": "Hi! I can help you explore programs, compare saved schools, or find the official application dates. Matches use reviewed program information; they do not predict admission.",
+    "qrFind": "🔍 Find my school",
+    "qrApply": "📋 How to apply",
+    "qrScores": "ⓘ About our matches",
+    "qrBrowse": "🏫 Browse all schools",
+    "aboutTitle": "About The STEM in Me",
+    "aboutP1": "Choosing a magnet program takes more than finding a name on a list. Families need clear program information, accurate grade ranges, and a practical next step.",
+    "aboutP2": "<strong>The STEM in Me</strong> created <strong>STEM Pathfinder</strong> to help Los Angeles families explore magnet schools, compare options, and find official application information. No account is needed. Our directory comes from CDE; program descriptions are reviewed separately and linked to their sources.",
+    "aboutContact": "📧 Get in touch — workshops, volunteering, or questions",
+    "footerTagline": "Helping LA kids find their path into STEM.",
+    "footerContact": "Contact",
+    "footerApply": "LAUSD Application",
+    "footerSource": "CDE school data",
+    "footerScores": "About the data",
+    "footerDisclaimer": "The STEM in Me is an independent community project, not affiliated with or endorsed by LAUSD. CDE directory entries describe schools; program details and admissions requirements must be confirmed with the school. A match is not an admission decision or a school quality rating.",
+    "footerCopy": "© 2026 The STEM in Me · Made with ❤️ in Los Angeles",
+    "gradesUnknown": "Grade range not recorded",
+    "gradesFromUnknown": "Starts at {low}; upper grade not recorded",
+    "officialSchool": "School website",
+    "sourceDetails": "Official program source",
+    "verifiedInterests": "Reviewed interests",
+    "inferredInterests": "Name search only",
+    "interestsUnknown": "Program details not yet reviewed",
+    "gradeDataMissing": "Some schools have incomplete grade data. Find them in Browse and confirm their grades with the school.",
+    "mapUnavailable": "The map is unavailable. Use the school list or directions links.",
+    "compare": "Compare",
+    "compareTitle": "Your three-school comparison",
+    "compareHint": "Choose up to three schools to compare their published details. Confirm the specific program’s entry grades, eligibility and transportation with the school.",
+    "compareEmpty": "Add schools with Compare to build a side-by-side shortlist.",
+    "compareLimit": "You can compare up to three schools. Remove one to add another.",
+    "removeCompare": "Remove from comparison",
+    "printShortlist": "Print shortlist",
+    "shareShortlist": "Share shortlist",
+    "shortlistCopied": "Shortlist link copied.",
+    "nameMatchTag": "Name match only",
+    "verifiedMatchTag": "Reviewed program match",
+    "verifiedProgram": "Reviewed program details",
+    "programUnverified": "Program details not yet reviewed",
+    "sourceChecked": "Source checked {date}",
+    "unknownGradeNotice": "{n} schools have incomplete grade data; check the full directory.",
+    "compareAdded": "Added to comparison. Open Saved & compare to view it.",
+    "compareRemoved": "Removed from your comparison.",
+    "gradeValue": "Grade {grade}",
+    "saveSchool": "Save school",
+    "removeSaved": "Remove from saved",
+    "saved": "Saved",
+    "saveLater": "Save for later",
+    "programSourceEnglish": "Source descriptions are available in English.",
+    "eligibility": "Admission requirements",
+    "transportation": "Transportation information",
+    "directoryWebsite": "Directory website",
+    "noWebsite": "Check with the school for its official website.",
+    "guideTitle": "Your next step: apply with LAUSD",
+    "guideEyebrow": "2027–28 school year",
+    "guideIntro": "Use this checklist to prepare. Complete and submit your application in LAUSD’s official portal.",
+    "guideOpen": "On-time applications are open",
+    "guideClosed": "The on-time application window has closed",
+    "guideUpcoming": "On-time applications open October 1, 2026",
+    "guideLate": "Late applications opened December 1, 2026; check availability with LAUSD",
+    "guideVerify": "Check the current application dates with LAUSD",
+    "guideDates": "On-time: October 1–November 6, 2026. Late applications open December 1, 2026.",
+    "guideChecked": "Dates checked October 21, 2026.",
+    "guideSource": "LAUSD enrollment calendar",
+    "guideApply": "Open official LAUSD application →",
+    "guideChecklistLabel": "My preparation checklist",
+    "guideCheck1": "Confirm the program’s entry grade and admission requirements.",
+    "guideCheck2": "Ask the school about the program, a visit, and transportation.",
+    "guideCheck3": "Complete and submit the application in LAUSD’s official portal.",
+    "guideCheck4": "Save LAUSD’s confirmation and check portal messages for next steps.",
+    "guideLocal": "Checklist marks stay in this browser. They do not confirm an application was submitted.",
+    "guideLink": "Application dates & checklist →",
+    "sourceYear": "Dataset: {year}.",
+    "programCoverage": "Reviewed program details: {n} schools. Other schools remain available in Browse.",
+    "dataUnavailable": "School data could not load. Please refresh, or use the official LAUSD directory.",
+    "gradeKindergarten": "Kindergarten",
+    "whyVerifiedMatch": "The official program page describes {interests}. Check the entry grade and admission requirements for this specific program.",
+    "reviewedMatchesNotice": "These matches use reviewed program descriptions. The directory also includes schools whose program details have not yet been reviewed.",
+    "copyLink": "Copy this link",
+    "sortDistance": "Distance",
+    "campusAddress": "Campus: {address}",
+    "mapCampusNotice": "Pins show school campuses from CDE. A program may meet elsewhere; confirm its address before traveling.",
+    "viewComparison": "View my comparison",
+    "directoryScope": "This CDE school directory is not a complete list of LAUSD magnet programs. Confirm program options with LAUSD.",
+    "openChat": "Open help chat",
+    "closeChat": "Close help chat",
+    "savedSchoolsHeading": "Saved schools"
   },
-
-  es: {
-    /* Appbar */
-    home: '🏠 Inicio',
-    browseAll: 'Ver todas las escuelas',
-    cachedData: 'Usando datos guardados',
-    sourceSnapshotKnown: 'Copia del directorio: {date}.',
-    sourceSnapshotUnknown: 'No se registró la fecha de la copia del directorio.',
-
-    /* Hero */
-    heroEyebrow: 'Una herramienta gratuita de The STEM in Me',
-    heroTitle: 'Encuentre la <em>escuela STEM</em><br>ideal para su hijo',
-    heroSub: 'Responda 3 preguntas para explorar programas magnet de LAUSD que podrían coincidir con el grado e intereses de su hijo.',
-    getStarted: 'Comenzar →',
-    heroAlt: '¿Ya sabe lo que busca?',
-    heroAltLink: 'Ver las 180 escuelas ↓',
-
-    /* Quiz */
-    stepOf: 'Paso {n} de {total}',
-    back: '← Atrás',
-    next: 'Siguiente →',
-    seeMatches: 'Ver resultados ✓',
-    q1: '¿En qué grado está su hijo?',
-    q1hint: 'Mostraremos escuelas de su grupo de grados. Confirme los requisitos con LAUSD.',
-    q1optElem: 'Primaria', q1subElem: 'Grados K – 5',
-    q1optMid: 'Secundaria', q1subMid: 'Grados 6 – 8',
-    q1optHigh: 'Preparatoria', q1subHigh: 'Grados 9 – 12',
-    q2: '¿Qué le emociona más a su hijo?',
-    q2hint: 'Elija todas las que quiera. Las coincidencias se infieren de los nombres de las escuelas.',
-    q2optScience: 'Ciencia y Naturaleza', q2subScience: 'Biología, medio ambiente, ciencias de la tierra',
-    q2optTech: 'Computadoras y Tecnología', q2subTech: 'Programación, robótica, medios digitales',
-    q2optMedical: 'Medicina y Salud', q2subMedical: 'Biotecnología, pre-medicina, ciencias de la salud',
-    q2optEngineer: 'Ingeniería y Construcción', q2subEngineer: 'Aeroespacial, arquitectura, matemáticas',
-    q2optArts: 'Arte + STEM', q2subArts: 'Diseño, cine, tecnología creativa',
-    q2optAny: 'Aún no sé', q2subAny: 'Muéstrame programas de distintas áreas STEM',
-    q3: '¿Qué es lo más importante para usted?',
-    q3hint: 'Lo usaremos para ordenar sus resultados.',
-    q3optQuality: 'Enfoque del programa', q3subQuality: 'Ordenar por una estimación experimental del programa',
-    q3optAccess: 'Grados publicados', q3subAccess: 'Ordenar según una estimación basada en los grados listados',
-    q3optEquity: 'Contexto comunitario', q3subEquity: 'Ordenar por una estimación demográfica experimental',
-
-    /* Results */
-    topMatches: '🎯 Sus mejores opciones',
-    resultsFor: 'Para un estudiante de {grade} interesado en {interests}',
-    schoolsFound: '{n} escuelas encontradas',
-    shareResults: '📤 Compartir resultados',
-    showMore: 'Ver {n} escuelas más ↓',
-    startOver: '↺ Empezar de nuevo',
-    browseAllArrow: 'Ver las 180 escuelas →',
-    applyNow: 'Aplicar Ahora →',
-    noMatches: 'Ninguna escuela de este grupo de grados coincidió con esos intereses por nombre. Elija otro interés o «Aún no sé». Confirme los detalles del programa con LAUSD.',
-    changeInterests: 'Cambiar intereses',
-    linkCopied: '🔗 ¡Enlace copiado!',
-    gradeElem: 'primaria', gradeMid: 'secundaria', gradeHigh: 'preparatoria',
-    intScience: 'Ciencia y Naturaleza', intTech: 'Computadoras y Tecnología', intMedical: 'Medicina y Salud',
-    intEngineer: 'Ingeniería y Construcción', intArts: 'Arte + STEM', intAny: 'Todos los programas STEM',
-
-    /* Why blurbs */
-    whyProgram: '{icon} <strong>Programa de {prog}</strong> — figura para {grades}. Confirme los detalles actuales con la escuela.',
-    whySolid: 'Figura para {grades}. Estimación experimental de comparación: {score}/10; no es una calificación de calidad verificada.',
-
-    /* Browse */
-    browseSchools: 'Explorar escuelas',
-    showStats: '▸ Ver promedios del distrito',
-    hideStats: '▾ Ocultar promedios del distrito',
-    avgQuality: 'Calidad Prom.', avgAccess: 'Acceso Prom.', avgEquity: 'Equidad Prom.', avgOverall: 'General Prom.',
-    statQualitySub: 'Rigor académico', statAccessSub: 'Alcance de inscripción', statEquitySub: 'Pob. menos favorecida', statOverallSub: 'Combinado',
-    tabList: '📋 Lista', tabMap: '🗺️ Mapa', tabSaved: '❤️ Guardadas',
-    search: 'Buscar', grade: 'Grado', sort: 'Ordenar',
-    searchPlaceholder: 'Nombre de escuela o dirección…',
-    allGrades: 'Todos los grados',
-    gradeK: 'K – Primaria', grade1: 'Grado 1', grade4: 'Grado 4',
-    grade6: 'Grado 6 – Secundaria', grade7: 'Grado 7', grade9: 'Grado 9 – Preparatoria',
-    sortName: 'Nombre A–Z', sortOverall: 'General ↓', sortQuality: 'Calidad ↓', sortAccess: 'Acceso ↓', sortEquity: 'Equidad ↓',
-    clear: '✕ Borrar',
-    scoreGuide: 'ⓘ Guía de puntajes',
-    showingAll: 'Mostrando las {n} escuelas magnet',
-    showingSome: '{n} de {total} escuelas',
-    noFilterResults: 'Ninguna escuela coincide con sus filtros.',
-    clearFilters: '✕ Borrar filtros',
-    notScored: 'Sin calificar aún',
-    topRated: '⭐ Mejor Calificada', highEquity: '🏅 Alta Equidad',
-    gradesLabel: 'Grados {low}–{high}',
-    quality: 'Calidad', access: 'Acceso', equity: 'Equidad',
-
-    /* Saved */
-    noSaved: 'Aún no hay escuelas guardadas',
-    noSavedHint: 'Toque el corazón en cualquier escuela para guardarla aquí y compararla después.',
-    savedToast: '❤️ ¡Guardada! Encuéntrela en la pestaña Guardadas.',
-    removedToast: 'Eliminada de escuelas guardadas',
-
-    /* Map */
-    mapScore: 'Puntaje', mapHigh: '8–10 Alto', mapMid: '5–7 Medio', mapLow: '1–4 Bajo',
-    mapOverall: 'General', directions: '📍 Cómo llegar',
-
-    /* Modal */
-    modalTitle: '📊 Cómo se califican las escuelas',
-    modalQuality: 'Calidad (1–10)',
-    modalQualityTxt: 'Estimación experimental basada en campos disponibles del directorio escolar. No es una medida verificada de calidad.',
-    modalAccess: 'Acceso (1–10)',
-    modalAccessTxt: 'Estimación experimental basada en los grados publicados. Confirme la elegibilidad y los detalles de solicitud con la escuela.',
-    modalEquity: 'Equidad (1–10)',
-    modalEquityTxt: 'Solo es una estimación experimental. No mide inclusión, apoyo estudiantil ni resultados de equidad escolar.',
-    gotIt: 'Entendido',
-
-    /* Chat */
-    chatFab: 'Ayuda',
-    chatName: 'Asistente Escolar',
-    chatStatus: 'Aquí para ayudar a las familias de LAUSD',
-    chatPlaceholder: 'Pregúnteme lo que sea…',
-    chatWelcome: `¡Hola! 👋 Estoy aquí para ayudarle a encontrar la escuela magnet STEM ideal para su hijo.\n\nPuede preguntarme cosas como:<br>• "Busca escuelas STEM para séptimo grado"<br>• "¿Cuáles son los mejores programas médicos?"<br>• "¿Cómo aplico?"`,
-    qrFind: '🔍 Buscar mi escuela', qrApply: '📋 Cómo aplicar', qrScores: '❓ Qué significan los puntajes', qrBrowse: '🏫 Ver todas las escuelas',
-
-    /* About / Footer */
-    aboutTitle: 'Acerca de The STEM in Me',
-    aboutP1: 'La lotería magnet de LAUSD es uno de los mejores caminos hacia programas STEM fuertes para los niños de Los Ángeles — pero el sistema es confuso, las fechas límite son estrictas, y las familias que más se beneficiarían muchas veces no tienen quién las ayude.',
-    aboutP2: '<strong>The STEM in Me</strong> existe para cambiar eso. <strong>STEM Pathfinder</strong>, nuestra herramienta gratuita, cubre las 180 escuelas magnet de LAUSD para que cualquier padre pueda buscar, comparar y encontrar el programa ideal para su hijo — sin registro, sin costo, sin trucos. Durante la temporada de solicitudes (noviembre–febrero) también ayudamos a las familias a completar sus solicitudes en persona.',
-    aboutContact: '📧 Contáctenos — talleres, voluntariado o preguntas',
-    footerTagline: 'Ayudando a los niños de LA a encontrar su camino hacia STEM.',
-    footerContact: 'Contacto', footerApply: 'Solicitud LAUSD', footerSource: 'Datos escolares del CDE', footerScores: 'Cómo funcionan los puntajes',
-    footerDisclaimer: 'The STEM in Me es un proyecto comunitario independiente y no está afiliado ni respaldado por el Distrito Escolar Unificado de Los Ángeles. Los datos del directorio escolar provienen del Departamento de Educación de California. Los puntajes son estimaciones experimentales, no calificaciones verificadas — visite las escuelas y confirme los detalles antes de solicitar.',
-    footerCopy: '© 2026 The STEM in Me · Hecho con ❤️ en Los Ángeles',
+  "es": {
+    "home": "🏠 Inicio",
+    "browseAll": "Ver todas las escuelas",
+    "cachedData": "Usando datos guardados",
+    "sourceSnapshotKnown": "Directorio obtenido: {date}.",
+    "sourceSnapshotUnknown": "No se registró la fecha de la copia del directorio.",
+    "heroEyebrow": "Una herramienta gratuita de The STEM in Me",
+    "heroTitle": "Encuentre la <em>escuela STEM</em><br>ideal para su hijo",
+    "heroSub": "Responda 2 preguntas, explore programas con fuentes oficiales y prepare su lista de escuelas.",
+    "getStarted": "Comenzar →",
+    "heroAlt": "¿Ya sabe lo que busca?",
+    "heroAltLink": "Explorar el directorio escolar ↓",
+    "stepOf": "Paso {n} de {total}",
+    "back": "← Atrás",
+    "next": "Siguiente →",
+    "seeMatches": "Ver resultados ✓",
+    "q1": "¿A qué grado ingresará su hijo?",
+    "q1hint": "Elija el grado del año escolar para el que solicita. Los grados publicados no garantizan la admisión.",
+    "q1optElem": "Primaria",
+    "q1subElem": "Grados K – 5",
+    "q1optMid": "Secundaria",
+    "q1subMid": "Grados 6 – 8",
+    "q1optHigh": "Preparatoria",
+    "q1subHigh": "Grados 9 – 12",
+    "q2": "¿Qué le emociona más a su hijo?",
+    "q2hint": "Elija todos los que quiera. Las coincidencias usan detalles revisados en páginas oficiales. Las escuelas sin revisión siguen en el directorio.",
+    "q2optScience": "Ciencia y Naturaleza",
+    "q2subScience": "Biología, medio ambiente, ciencias de la tierra",
+    "q2optTech": "Computadoras y Tecnología",
+    "q2subTech": "Programación, robótica, medios digitales",
+    "q2optMedical": "Medicina y Salud",
+    "q2subMedical": "Biotecnología, pre-medicina, ciencias de la salud",
+    "q2optEngineer": "Ingeniería y Construcción",
+    "q2subEngineer": "Aeroespacial, arquitectura, matemáticas",
+    "q2optArts": "Arte + STEM",
+    "q2subArts": "Diseño, cine, tecnología creativa",
+    "q2optAny": "Aún no sé",
+    "q2subAny": "Muéstrame programas de distintas áreas STEM",
+    "topMatches": "🎯 Escuelas para su grado e intereses",
+    "resultsFor": "Grado de ingreso: {grade} · Intereses: {interests}",
+    "schoolsFound": "{n} escuelas encontradas",
+    "shareResults": "📤 Compartir resultados",
+    "showMore": "Ver {n} escuelas más ↓",
+    "startOver": "↺ Empezar de nuevo",
+    "browseAllArrow": "Explorar el directorio escolar →",
+    "applyNow": "Aplicar Ahora →",
+    "noMatches": "Aún no hay un programa revisado que coincida con este grado e interés. Seguimos ampliando la revisión. Elija «Aún no sé» o explore el directorio.",
+    "changeInterests": "Cambiar intereses",
+    "linkCopied": "🔗 ¡Enlace copiado!",
+    "gradeElem": "primaria",
+    "gradeMid": "secundaria",
+    "gradeHigh": "preparatoria",
+    "intScience": "Ciencia y Naturaleza",
+    "intTech": "Computadoras y Tecnología",
+    "intMedical": "Medicina y Salud",
+    "intEngineer": "Ingeniería y Construcción",
+    "intArts": "Arte + STEM",
+    "intAny": "Todos los intereses",
+    "whyNameMatches": "Figura para {grades}. El nombre de la escuela coincidió con estos términos de interés: {interests}. Esto no confirma el plan de estudios actual; consulte con la escuela.",
+    "whyGradeMatch": "El directorio indica {grades}. Confirme con la escuela los grados de ingreso y requisitos del programa específico.",
+    "browseSchools": "Explorar escuelas",
+    "tabList": "📋 Lista",
+    "tabMap": "🗺️ Mapa",
+    "tabSaved": "❤️ Guardar y comparar",
+    "search": "Buscar",
+    "grade": "Grado",
+    "sort": "Ordenar",
+    "searchPlaceholder": "Nombre de escuela o dirección…",
+    "allGrades": "Todos los grados",
+    "gradeK": "K – Primaria",
+    "grade1": "Grado 1",
+    "grade4": "Grado 4",
+    "grade6": "Grado 6 – Secundaria",
+    "grade7": "Grado 7",
+    "grade9": "Grado 9 – Preparatoria",
+    "sortName": "Nombre A–Z",
+    "clear": "✕ Borrar",
+    "scoreGuide": "ⓘ Acerca de los datos",
+    "showingAll": "Mostrando las {n} escuelas magnet",
+    "showingSome": "{n} de {total} escuelas",
+    "noFilterResults": "Ninguna escuela coincide con sus filtros.",
+    "clearFilters": "✕ Borrar filtros",
+    "gradesLabel": "Grados de la escuela: {low}–{high}",
+    "noSaved": "Aún no hay escuelas guardadas",
+    "noSavedHint": "Toque el corazón en cualquier escuela para guardarla aquí y compararla después.",
+    "savedToast": "❤️ ¡Guardada! Encuéntrela en la pestaña Guardadas.",
+    "removedToast": "Eliminada de escuelas guardadas",
+    "directions": "📍 Cómo llegar",
+    "modalTitle": "Cómo usar este directorio",
+    "modalQuality": "Datos del directorio",
+    "modalQualityTxt": "Los grados, direcciones, sitios web e identificadores provienen del directorio fechado del CDE. Una escuela puede tener varios programas con requisitos distintos.",
+    "modalAccess": "Detalles de programas revisados",
+    "modalAccessTxt": "Los intereses revisados incluyen un enlace oficial y una fecha de consulta. Describen el programa publicado; no indican calidad ni garantizan cupo.",
+    "modalEquity": "Qué falta por confirmar",
+    "modalEquityTxt": "«Detalles del programa aún sin revisar» significa que no hemos agregado una fuente. No significa que la escuela no tenga STEM. Confirme los grados de ingreso, requisitos y transporte con la escuela.",
+    "gotIt": "Entendido",
+    "chatFab": "Ayuda",
+    "chatName": "Asistente Escolar",
+    "chatStatus": "Aquí para ayudar a las familias de LAUSD",
+    "chatPlaceholder": "Pregúnteme lo que sea…",
+    "chatWelcome": "¡Hola! Puedo ayudarle a explorar programas, comparar escuelas guardadas o consultar fechas oficiales. Las coincidencias usan información revisada y no predicen la admisión.",
+    "qrFind": "🔍 Buscar mi escuela",
+    "qrApply": "📋 Cómo aplicar",
+    "qrScores": "ⓘ Acerca de las coincidencias",
+    "qrBrowse": "🏫 Ver todas las escuelas",
+    "aboutTitle": "Acerca de The STEM in Me",
+    "aboutP1": "Elegir un programa magnet requiere información clara del programa, grados correctos y un siguiente paso práctico.",
+    "aboutP2": "<strong>The STEM in Me</strong> creó <strong>STEM Pathfinder</strong> para ayudar a las familias de Los Ángeles a explorar escuelas magnet, comparar opciones y encontrar información oficial de solicitudes. No necesita una cuenta. El directorio proviene del CDE; las descripciones de programas se revisan por separado e incluyen sus fuentes.",
+    "aboutContact": "📧 Contáctenos — talleres, voluntariado o preguntas",
+    "footerTagline": "Ayudando a los niños de LA a encontrar su camino hacia STEM.",
+    "footerContact": "Contacto",
+    "footerApply": "Solicitud LAUSD",
+    "footerSource": "Datos escolares del CDE",
+    "footerScores": "Acerca de los datos",
+    "footerDisclaimer": "The STEM in Me es un proyecto comunitario independiente, sin afiliación ni respaldo de LAUSD. El directorio del CDE describe escuelas; confirme los programas y requisitos con cada escuela. Una coincidencia no es una decisión de admisión ni una calificación de calidad.",
+    "footerCopy": "© 2026 The STEM in Me · Hecho con ❤️ en Los Ángeles",
+    "gradesUnknown": "Grados no registrados",
+    "gradesFromUnknown": "Empieza en {low}; grado final no registrado",
+    "officialSchool": "Sitio web escolar",
+    "sourceDetails": "Fuente oficial del programa",
+    "verifiedInterests": "Intereses revisados",
+    "inferredInterests": "Solo búsqueda por nombre",
+    "interestsUnknown": "Detalles del programa aún sin revisar",
+    "gradeDataMissing": "Algunas escuelas tienen datos de grados incompletos. Búsquelas en el directorio y confirme los grados con la escuela.",
+    "mapUnavailable": "El mapa no está disponible. Use la lista o los enlaces de cómo llegar.",
+    "compare": "Comparar",
+    "compareTitle": "Su comparación de tres escuelas",
+    "compareHint": "Elija hasta tres escuelas para comparar los detalles publicados. Confirme los grados de ingreso, requisitos y transporte del programa con cada escuela.",
+    "compareEmpty": "Use Comparar para preparar una lista de escuelas lado a lado.",
+    "compareLimit": "Puede comparar hasta tres escuelas. Quite una para agregar otra.",
+    "removeCompare": "Quitar de la comparación",
+    "printShortlist": "Imprimir lista",
+    "shareShortlist": "Compartir lista",
+    "shortlistCopied": "Enlace de la lista copiado.",
+    "nameMatchTag": "Solo coincide el nombre",
+    "verifiedMatchTag": "Coincidencia con programa revisado",
+    "verifiedProgram": "Detalles del programa revisados",
+    "programUnverified": "Detalles del programa aún sin revisar",
+    "sourceChecked": "Fuente consultada el {date}",
+    "unknownGradeNotice": "{n} escuelas tienen datos de grados incompletos; consulte el directorio completo.",
+    "compareAdded": "Agregada a la comparación. Abra Guardar y comparar para verla.",
+    "compareRemoved": "Eliminada de su comparación.",
+    "gradeValue": "Grado {grade}",
+    "saveSchool": "Guardar escuela",
+    "removeSaved": "Quitar de guardadas",
+    "saved": "Guardada",
+    "saveLater": "Guardar para después",
+    "programSourceEnglish": "Las descripciones de las fuentes están disponibles en inglés.",
+    "eligibility": "Requisitos de admisión",
+    "transportation": "Información de transporte",
+    "directoryWebsite": "Sitio web del directorio",
+    "noWebsite": "Consulte con la escuela para obtener su sitio oficial.",
+    "guideTitle": "Su siguiente paso: solicitar con LAUSD",
+    "guideEyebrow": "Año escolar 2027–28",
+    "guideIntro": "Use esta lista para prepararse. Complete y envíe la solicitud en el portal oficial de LAUSD.",
+    "guideOpen": "Las solicitudes a tiempo están abiertas",
+    "guideClosed": "El plazo de solicitudes a tiempo ha terminado",
+    "guideUpcoming": "Las solicitudes a tiempo abren el 1 de octubre de 2026",
+    "guideLate": "Las solicitudes tardías abrieron el 1 de diciembre de 2026; confirme la disponibilidad con LAUSD",
+    "guideVerify": "Confirme las fechas actuales con LAUSD",
+    "guideDates": "A tiempo: del 1 de octubre al 6 de noviembre de 2026. Las solicitudes tardías abren el 1 de diciembre de 2026.",
+    "guideChecked": "Fechas consultadas el 21 de octubre de 2026.",
+    "guideSource": "Calendario de inscripción de LAUSD",
+    "guideApply": "Abrir solicitud oficial de LAUSD →",
+    "guideChecklistLabel": "Mi lista de preparación",
+    "guideCheck1": "Confirmar el grado de ingreso y los requisitos del programa.",
+    "guideCheck2": "Preguntar a la escuela sobre el programa, las visitas y el transporte.",
+    "guideCheck3": "Completar y enviar la solicitud en el portal oficial de LAUSD.",
+    "guideCheck4": "Guardar la confirmación de LAUSD y revisar los mensajes del portal.",
+    "guideLocal": "Las marcas se guardan en este navegador. No confirman que se haya enviado una solicitud.",
+    "guideLink": "Fechas de solicitud y lista →",
+    "sourceYear": "Conjunto de datos: {year}.",
+    "programCoverage": "Detalles de programas revisados: {n} escuelas. Las demás siguen disponibles en el directorio.",
+    "dataUnavailable": "No se pudieron cargar los datos escolares. Actualice la página o use el directorio oficial de LAUSD.",
+    "gradeKindergarten": "Kínder",
+    "whyVerifiedMatch": "La página oficial del programa describe {interests}. Confirme el grado de ingreso y los requisitos de este programa específico.",
+    "reviewedMatchesNotice": "Estas coincidencias usan descripciones de programas revisadas. El directorio también incluye escuelas cuyos programas aún no se han revisado.",
+    "copyLink": "Copie este enlace",
+    "sortDistance": "Distancia",
+    "campusAddress": "Escuela: {address}",
+    "mapCampusNotice": "Los puntos muestran las escuelas del directorio CDE. Un programa puede reunirse en otro lugar; confirme la dirección antes de viajar.",
+    "viewComparison": "Ver mi comparación",
+    "directoryScope": "Este directorio escolar del CDE no incluye todos los programas magnet de LAUSD. Confirme las opciones con LAUSD.",
+    "openChat": "Abrir ayuda",
+    "closeChat": "Cerrar ayuda",
+    "savedSchoolsHeading": "Escuelas guardadas"
   }
 };
 
-let LANG = localStorage.getItem('stem_pathfinder_lang') || 'en';
-
+let LANG = 'en';
+try { LANG = localStorage.getItem('stem_pathfinder_lang') === 'es' ? 'es' : 'en'; } catch {}
 function t(key, vars) {
-  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key;
-  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
-  return s;
+  let value = I18N[LANG]?.[key] || I18N.en[key] || key;
+  if (vars) for (const [name, replacement] of Object.entries(vars)) value = value.replaceAll(`{${name}}`, String(replacement));
+  return value;
 }
-
 function setLang(lang) {
-  LANG = lang;
-  localStorage.setItem('stem_pathfinder_lang', lang);
-  document.documentElement.lang = lang;
-  applyStaticI18n();
-  refreshDynamicViews();
+  LANG = lang === 'es' ? 'es' : 'en';
+  try { localStorage.setItem('stem_pathfinder_lang', LANG); } catch {}
+  document.documentElement.lang = LANG;
+  applyStaticI18n(); refreshDynamicViews();
 }
-
 function toggleLang() { setLang(LANG === 'en' ? 'es' : 'en'); }
-
-/* Re-translate every static element on the page. */
 function applyStaticI18n() {
-  const set = (sel, key, html = false) => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    if (html) el.innerHTML = t(key); else el.textContent = t(key);
+  const set = (selector, key, html = false) => {
+    const node = document.querySelector(selector);
+    if (node) { if (html) node.innerHTML = t(key); else node.textContent = t(key); if(node.tagName === 'BUTTON' && node.hasAttribute('aria-label')) node.setAttribute('aria-label',t(key)); }
   };
-
-  // Language toggle shows the language you'd switch TO
-  const langBtn = document.getElementById('lang-toggle');
-  if (langBtn) langBtn.textContent = LANG === 'en' ? '🌐 Español' : '🌐 English';
-
-  set('.home-btn', 'home');
-  set('#offline-pill', 'cachedData');
-  set('.nav-btn', 'browseAll');
-
-  set('.hero-eyebrow', 'heroEyebrow');
-  set('.hero h1', 'heroTitle', true);
-  set('.hero-sub', 'heroSub');
-  set('.btn-start', 'getStarted');
-  const heroAlt = document.querySelector('.hero-alt');
-  if (heroAlt) heroAlt.innerHTML =
-    `${t('heroAlt')} <a onclick="scrollToBrowse()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')scrollToBrowse()">${t('heroAltLink')}</a>`;
-
-  set('#btn-back', 'back');
-
-  set('.results-header h2', 'topMatches');
-  set('.btn-share', 'shareResults');
-  set('.btn-restart', 'startOver');
-  set('.results-footer .link-btn', 'browseAllArrow');
-
-  set('.section-divider span', 'browseSchools');
-  set('#stats-toggle-btn', statsOpen ? 'hideStats' : 'showStats');
-  set('#stat-quality .stat-label', 'avgQuality');
-  set('#stat-access .stat-label', 'avgAccess');
-  set('#stat-equity .stat-label', 'avgEquity');
-  set('#stat-overall .stat-label', 'avgOverall');
-  set('#stat-quality .stat-sub', 'statQualitySub');
-  set('#stat-access .stat-sub', 'statAccessSub');
-  set('#stat-equity .stat-sub', 'statEquitySub');
-  set('#stat-overall .stat-sub', 'statOverallSub');
-
-  const tabSavedBadge = document.getElementById('fav-badge')?.outerHTML || '';
-  set('#tab-list', 'tabList'); set('#tab-map', 'tabMap');
-  const tabSaved = document.getElementById('tab-saved');
-  if (tabSaved) { tabSaved.innerHTML = `${t('tabSaved')} ${tabSavedBadge}`; updateFavBadge(); }
-
-  const lbls = document.querySelectorAll('.filter-bar .filter-lbl');
-  if (lbls.length >= 3) { lbls[0].textContent = t('search'); lbls[1].textContent = t('grade'); lbls[2].textContent = t('sort'); }
-  const searchEl = document.getElementById('search');
-  if (searchEl) searchEl.placeholder = t('searchPlaceholder');
-  const gradeSel = document.getElementById('grade-filter');
-  if (gradeSel) {
-    const keys = ['allGrades','gradeK','grade1','grade4','grade6','grade7','grade9'];
-    [...gradeSel.options].forEach((o, i) => { if (keys[i]) o.textContent = t(keys[i]); });
-  }
-  const sortSel = document.getElementById('sort');
-  if (sortSel) {
-    const keys = ['sortName','sortOverall','sortQuality','sortAccess','sortEquity'];
-    [...sortSel.options].forEach((o, i) => { if (keys[i]) o.textContent = t(keys[i]); });
-  }
-  const clearBtn = document.getElementById('clear-btn');
-  if (clearBtn) clearBtn.innerHTML = `${t('clear')} <span class="fc-badge" id="fc-badge"></span>`;
-  set('.info-btn', 'scoreGuide');
-
-  set('#modal-title', 'modalTitle');
-  const modalRows = document.querySelectorAll('.modal-row');
-  const modalKeys = [['modalQuality','modalQualityTxt'],['modalAccess','modalAccessTxt'],['modalEquity','modalEquityTxt']];
-  modalRows.forEach((row, i) => {
-    if (!modalKeys[i]) return;
-    const s = row.querySelector('strong'), sp = row.querySelector('span');
-    if (s) s.textContent = t(modalKeys[i][0]);
-    if (sp) sp.textContent = t(modalKeys[i][1]);
+  const langButton = document.getElementById('lang-toggle');
+  if (langButton) langButton.textContent = LANG === 'en' ? '🌐 Español' : '🌐 English';
+  const textNodes = {
+    '.home-btn':'home', '.appbar-right .nav-btn:first-of-type':'browseAll',
+    '.hero-eyebrow':'heroEyebrow', '.hero-sub':'heroSub', '.btn-start':'getStarted',
+    '#btn-back':'back', '.results-header h2':'topMatches', '[onclick="shareResults()"]':'shareResults',
+    '.btn-restart':'startOver', '.results-footer .link-btn':'browseAllArrow', '.section-divider span':'browseSchools',
+    '#tab-list':'tabList', '#tab-map':'tabMap', '.info-btn':'scoreGuide', '#modal-title':'modalTitle',
+    '.modal-close':'gotIt', '.chat-header-name':'chatName', '.chat-header-status':'chatStatus',
+    '.about h2':'aboutTitle', '.about-contact':'aboutContact', '.footer-brand span':'footerTagline',
+    '#footer-disclaimer-text':'footerDisclaimer', '.footer-copy':'footerCopy',
+    '#deadline-link':'guideLink'
+  };
+  Object.entries(textNodes).forEach(([selector,key]) => set(selector,key));
+  set('.hero h1','heroTitle',true);
+  const alt = document.querySelector('.hero-alt');
+  if (alt) alt.innerHTML = `${t('heroAlt')} <button class="hero-browse-link" onclick="scrollToBrowse()">${t('heroAltLink')}</button>`;
+  const saved = document.getElementById('tab-saved');
+  if (saved) { saved.innerHTML = `${t('tabSaved')} <span class="tab-badge" id="fav-badge" aria-label="${t('saved')}" style="display:none"></span>`; if (typeof updateFavBadge === 'function') updateFavBadge(); }
+  const labels = document.querySelectorAll('.filter-bar .filter-lbl');
+  ['search','grade','sort'].forEach((key,i) => { if(labels[i]) labels[i].textContent=t(key); });
+  const search = document.getElementById('search'); if(search) search.placeholder=t('searchPlaceholder');
+  const grade = document.getElementById('grade-filter');
+  if(grade) [...grade.options].forEach(option => option.textContent = option.value === '' ? t('allGrades') : option.value === 'K' ? 'K' : t('gradeValue',{grade:option.value}));
+  const sort = document.getElementById('sort'); if(sort) [...sort.options].forEach(option => option.textContent=t('sortName'));
+  const clear = document.getElementById('clear-btn'); if(clear) clear.innerHTML=`${t('clear')} <span class="fc-badge" id="fc-badge"></span>`;
+  document.querySelectorAll('.modal-row').forEach((row,i) => {
+    const keys = [['modalQuality','modalQualityTxt'],['modalAccess','modalAccessTxt'],['modalEquity','modalEquityTxt']][i];
+    if(keys) { row.querySelector('strong').textContent=t(keys[0]); row.querySelector('.modal-txt > span').textContent=t(keys[1]); }
   });
-  set('.modal-close', 'gotIt');
-
-  const fab = document.getElementById('chat-fab');
-  if (fab) fab.innerHTML = `<span aria-hidden="true">💬</span> ${t('chatFab')} <span class="fab-dot" aria-hidden="true"></span>`;
-  set('.chat-header-name', 'chatName');
-  set('.chat-header-status', 'chatStatus');
-  const chatInput = document.getElementById('chat-input');
-  if (chatInput) chatInput.placeholder = t('chatPlaceholder');
-
-  set('.about h2', 'aboutTitle');
-  const aboutPs = document.querySelectorAll('.about-inner > p');
-  if (aboutPs[0]) aboutPs[0].innerHTML = t('aboutP1');
-  if (aboutPs[1]) aboutPs[1].innerHTML = t('aboutP2');
-  set('.about-contact', 'aboutContact');
-
-  set('.footer-brand span', 'footerTagline');
-  const fLinks = document.querySelectorAll('.footer-links a');
-  if (fLinks.length >= 4) {
-    fLinks[0].textContent = t('footerContact');
-    fLinks[1].textContent = t('footerApply');
-    fLinks[2].textContent = t('footerSource');
-    fLinks[3].textContent = t('footerScores');
+  const fab=document.getElementById('chat-fab'); if(fab) fab.setAttribute('aria-label',t('openChat')); if(fab) fab.innerHTML=`<span aria-hidden="true">💬</span> ${t('chatFab')}`;
+  const chat=document.getElementById('chat-input'); if(chat) chat.placeholder=t('chatPlaceholder');
+  const about=document.querySelectorAll('.about-inner > p');
+  if(about[0]) about[0].innerHTML=t('aboutP1'); if(about[1]) about[1].innerHTML=t('aboutP2');
+  document.querySelectorAll('.footer-links a').forEach((link,i)=>link.textContent=t(['footerContact','footerApply','footerSource','footerScores'][i]));
+  const source=document.getElementById('source-freshness');
+  if(source) {
+    const metadata=typeof SCHOOL_DATA_SOURCE !== 'undefined' ? SCHOOL_DATA_SOURCE : {};
+    source.textContent=' '+(metadata.retrievedAt ? t('sourceSnapshotKnown',{date:metadata.retrievedAt}) : t('sourceSnapshotUnknown'))+(metadata.schoolYear ? ' '+t('sourceYear',{year:metadata.schoolYear}) : '');
   }
-  set('#footer-disclaimer-text', 'footerDisclaimer');
-  const sourceNote = document.getElementById('source-freshness');
-  if (sourceNote) {
-    // `schools_data.js` declares a top-level const, which is visible to later
-    // classic scripts but is not attached to `window`.
-    const refreshedAt = typeof SCHOOL_DATA_SOURCE !== 'undefined'
-      ? SCHOOL_DATA_SOURCE.retrievedAt
-      : null;
-    sourceNote.textContent = refreshedAt
-      ? ` ${t('sourceSnapshotKnown', { date: refreshedAt })}`
-      : ` ${t('sourceSnapshotUnknown')}`;
-  }
-  set('.footer-copy', 'footerCopy');
+  const coverage=document.getElementById('program-coverage');
+  if(coverage && typeof PROGRAM_EVIDENCE !== 'undefined') coverage.textContent=t('programCoverage',{n:new Set(PROGRAM_EVIDENCE.map(p=>p.schoolId || p.schoolName)).size});
+  document.querySelectorAll('[data-i18n]').forEach(node=>node.textContent=t(node.dataset.i18n));
+  if(typeof renderApplicationGuide === 'function') renderApplicationGuide();
 }
-
-/* Re-render anything built by JS in the old language. */
 function refreshDynamicViews() {
-  if (document.getElementById('quiz-panel').style.display === 'block') renderStep();
-  if (document.getElementById('results-panel').style.display === 'block') showResults();
-  if (typeof applyFilters === 'function' && allSchools.length) applyFilters();
-  if (currentTab === 'saved') renderSaved();
-  if (chatOpen) renderQR();
-  // Map legend/popups are rebuilt on next open; force rebuild:
-  if (mapInstance) { mapInstance.remove(); mapInstance = null; if (currentTab === 'map') initMap(); }
+  const previousScroll=window.scrollY;
+  const browseWasVisible=document.getElementById('browse-section')?.style.display==='block';
+  const previousTab=currentTab;
+  if(document.getElementById('quiz-panel')?.style.display==='block') renderStep();
+  if(document.getElementById('results-panel')?.style.display==='block') {
+    const shown=document.querySelectorAll('.rcard').length;
+    showResults();
+    while(document.querySelectorAll('.rcard').length<shown && document.querySelectorAll('.rcard').length<allResults.length) showMore();
+  }
+  if(typeof applyFilters==='function' && allSchools.length) applyFilters();
+  if(browseWasVisible) switchTab(previousTab);
+  if(currentTab==='saved') renderSaved();
+  if(typeof chatOpen!=='undefined' && chatOpen) renderQR();
+  if(mapInstance) { mapInstance.remove(); mapInstance=null; if(currentTab==='map') initMap(); }
+  window.scrollTo({top:previousScroll,behavior:'instant'});
 }

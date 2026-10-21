@@ -643,3 +643,84 @@ a.map-link:hover { color: var(--blue-700); text-decoration: underline; }
 
   .rcard-chips { display: none; }
 }
+
+/* Sourced school facts, comparison, and application preparation. */
+button, input, select { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #FFB300; outline-offset: 3px; }
+.hero-browse-link { border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; }
+.hero-deadline { margin: 18px 0 0; font-size: 14px; }
+.hero-deadline a { color: #fff; text-underline-offset: 4px; font-weight: 600; }
+.coverage-note { max-width: 640px; margin: 12px auto; color: var(--text-mid); font-size: 13px; line-height: 1.6; }
+.option-grid.grade-options { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.grade-options .opt { max-width: none; width: 100%; min-height: 52px; padding: 14px 8px; text-align: center; justify-content: center; }
+.grade-options .opt-label { font-size: 15px; }
+.card-right { min-width: 112px; gap: 10px; display: flex; align-items: flex-start; justify-content: flex-start; }
+.card-main { min-width: 0; }
+.card-name, .rcard-name, .comparison-card h3 { overflow-wrap: anywhere; }
+.program-evidence { padding: 14px 0 3px; color: var(--text-mid); line-height: 1.6; font-size: 14px; }
+.program-evidence + .program-evidence { margin-top: 12px; border-top: 1px solid var(--border); }
+.program-evidence strong { display: block; color: var(--text); font-size: 14px; }
+.program-evidence p { margin: 5px 0; }
+.program-interests { color: var(--blue-700); font-size: 12px; font-weight: 650; }
+.program-unverified { color: #526574; padding-top: 12px; font-size: 13px; line-height: 1.6; }
+.source-meta, .source-note { color: #526574; font-size: 12px; line-height: 1.65; }
+.source-link { display: inline-block; color: var(--blue-700); margin: 4px 12px 4px 0; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.compare-btn, .comparison-actions button, .comparison-card button { border: 1px solid var(--blue-200); border-radius: 8px; background: var(--blue-50); color: var(--blue-900); padding: 9px 12px; cursor: pointer; font-size: 13px; line-height: 1.35; }
+.compare-btn.active { background: var(--blue-700); color: #fff; border-color: var(--blue-700); }
+.school-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.comparison-panel { padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin: 8px 0 28px; }
+.comparison-heading h2 { font-size: 22px; margin-bottom: 10px; }
+.comparison-heading p { color: var(--text-mid); max-width: 760px; line-height: 1.65; font-size: 14px; }
+.comparison-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.comparison-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.comparison-card { background: #f8fafc; padding: 18px; border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+.comparison-card h3 { font-size: 16px; line-height: 1.5; margin-bottom: 10px; }
+.comparison-card > p { color: var(--text-mid); font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+.application-guide { scroll-margin-top: 76px; max-width: 1040px; margin: 48px auto; padding: 32px; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm); }
+.section-eyebrow { color: var(--blue-700); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; font-size: 12px; margin-bottom: 8px; }
+.guide-heading h2 { font-size: 26px; line-height: 1.3; margin: 0 0 12px; }
+.guide-heading > p:last-child { color: var(--text-mid); max-width: 680px; font-size: 15px; line-height: 1.65; }
+.guide-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px; margin-top: 24px; }
+.guide-dates { background: #edf5ff; border-radius: 10px; padding: 22px; color: var(--text-mid); line-height: 1.7; }
+.application-status { font-weight: 700; font-size: 18px; line-height: 1.45; color: var(--blue-900); margin-bottom: 12px; }
+.guide-dates .source-note { margin: 16px 0; }
+.source-note a { color: var(--blue-700); }
+.guide-apply { display: inline-block; font-size: 14px; line-height: 1.5; text-decoration: none; width: auto; text-align: center; }
+.application-checklist { border: 0; min-width: 0; padding: 0; }
+.application-checklist legend { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+.application-checklist label { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; color: var(--text-mid); font-size: 14px; line-height: 1.6; cursor: pointer; }
+.application-checklist input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; accent-color: var(--blue-700); }
+.application-checklist .source-note { margin-top: 12px; }
+@media (max-width: 700px) {
+  .application-guide { margin: 28px 14px; padding: 22px; }
+  .guide-grid { grid-template-columns: 1fr; gap: 24px; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .comparison-panel { padding: 18px; }
+  .card-right { min-width: 0; flex-direction: row; align-items: center; }
+  .card-header { flex-wrap: wrap; }
+  .card-main { flex-basis: 100%; }
+  .source-link { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .option-grid.grade-options { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .grade-options .opt { padding: 12px 6px; }
+  .guide-heading h2 { font-size: 23px; }
+  .guide-dates { padding: 18px; }
+  .appbar-right .nav-btn:first-of-type { max-width: 150px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; }
+}
+@media print {
+  body.print-shortlist * { visibility: hidden !important; }
+  body.print-shortlist #comparison-panel, body.print-shortlist #comparison-panel * { visibility: visible !important; }
+  body.print-shortlist #comparison-panel { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 16px; box-shadow: none; border: 0; }
+  body.print-shortlist .comparison-actions, body.print-shortlist .compare-btn, body.print-shortlist .fav-btn { display: none !important; }
+  body.print-shortlist .comparison-grid { display: block; }
+  body.print-shortlist .comparison-card { break-inside: avoid; margin-bottom: 16px; }
+  body.print-shortlist .source-link::after { content: ' (' attr(href) ')'; font-size: 10px; }
+}
+.directory-scope { padding: 4px 20px 16px; max-width: 1000px; color: var(--text-mid); font-size: 13px; line-height: 1.65; }
+.map-link { color: #365469; }
+.location-note, .eligibility-note { font-weight: 550; color: #37474f; }
+.results-notice { margin: 12px 0 18px; font-size: 13px; color: #37474f; line-height: 1.6; }
