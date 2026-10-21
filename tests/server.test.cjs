@@ -11,7 +11,7 @@ const root = path.resolve(__dirname, '..');
 async function launch(dbPath) {
   const child = spawn(process.execPath, ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT: '0', STEM_PATH_DB: dbPath },
+    env: { ...process.env, PORT: '0', STEM_PATH_DB: dbPath, CHAT_ENABLED: 'false' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const base = await new Promise((resolve, reject) => {
@@ -42,6 +42,16 @@ test('saved schools persist across restart and stay isolated by browser cookie',
     server = await launch(dbPath);
     const first = await fetch(`${server.base}/api/favorites`);
     assert.equal(first.status, 200);
+    const unavailableChat = await fetch(`${server.base}/api/chat`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'Find medical programs' }], language: 'en', comparisonSchoolIds: [] }),
+    });
+    assert.equal(unavailableChat.status, 503);
+    assert.equal((await unavailableChat.json()).error.code, 'NOT_CONFIGURED');
+    const invalidChat = await fetch(`${server.base}/api/chat`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [] }),
+    });
+    assert.equal(invalidChat.status, 400);
     const cookie = first.headers.get('set-cookie').split(';')[0];
 
     const save = await fetch(`${server.base}/api/favorites`, {

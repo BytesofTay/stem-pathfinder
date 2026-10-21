@@ -44,13 +44,66 @@ test('source ID mismatch cannot attach a program through an obsolete matching na
   assert.equal(vm.runInContext(`SchoolUtils.programEvidence({id:'new',name:'Same name'},[{schoolId:'old',schoolName:'Same name',sourceUrl:'https://school.lausd.org',interests:['science']}]).length`,context),0);
   assert.equal(vm.runInContext(`SchoolUtils.servesGrade({low_grade:'TK',high_grade:'5'},'K')`,context),true);
 });
-test('help can find reviewed programs without assuming a grade or a school quality rating',()=>{
+test('hosted chat sends bounded history, language, and known comparison IDs',()=>{
   const context=load();
-  vm.runInContext('let replies=[]; botSay=(text)=>replies.push(text); handleMsg("medical programs");',context);
-  const reply=vm.runInContext('replies.join(" ")',context);
-  assert.match(reply,/Francisco Bravo/);
-  assert.ok(!reply.includes('/10'));
-  assert.match(reply,/not ranked by school quality/);
+  vm.runInContext(`
+    userSay=()=>{};
+    requestChat=request=>request;
+    compared=new Set([SCHOOLS_DATA[0].name,'unknown school']);
+    chatHistory=Array.from({length:4},(_,i)=>[
+      {role:'user',content:'Question '+i},{role:'assistant',content:'Answer '+i}
+    ]).flat();
+    LANG='es';
+  `,context);
+  const request=JSON.parse(vm.runInContext('JSON.stringify(handleMsg("medical programs"))',context));
+  assert.equal(request.language,'es');
+  assert.equal(request.messages.length,7);
+  assert.equal(request.messages[0].role,'user');
+  assert.deepEqual(request.messages.at(-1),{role:'user',content:'medical programs'});
+  assert.deepEqual(request.comparisonSchoolIds,JSON.parse(vm.runInContext('JSON.stringify([SCHOOLS_DATA[0].id])',context)));
+});
+test('hosted add actions are additive and idempotent and reject unknown IDs at the comparison cap',()=>{
+  const context=load();
+  context.location={hash:''};
+  context.localStorage={getItem(){return null;},setItem(){}};
+  vm.runInContext('syncSchoolButtons=()=>{}; compared=new Set([SCHOOLS_DATA[0].name]);',context);
+  const result=JSON.parse(vm.runInContext(`JSON.stringify(addSchoolIdsToComparison([
+    ...SCHOOLS_DATA.slice(0,4).map(s=>s.id),'99999999999999','not-an-id'
+  ]))`,context));
+  assert.equal(result.added.length,2);
+  assert.equal(result.existing.length,1);
+  assert.deepEqual(result.rejected.map(item=>item.reason),['limit','not_found','invalid']);
+  assert.equal(result.total,3);
+  assert.equal(result.persisted,true);
+  const repeat=JSON.parse(vm.runInContext('JSON.stringify(addSchoolIdsToComparison(SCHOOLS_DATA.slice(0,3).map(s=>s.id)))',context));
+  assert.equal(repeat.added.length,0);
+  assert.equal(repeat.existing.length,3);
+  assert.equal(vm.runInContext('compared.has(SCHOOLS_DATA[0].name)',context),true);
+});
+test('long assistant replies cannot push follow-up history beyond the hosted request bounds',()=>{
+  const context=load();
+  vm.runInContext(`chatHistory=Array.from({length:4},()=>[
+    {role:'user',content:'u'.repeat(1200)},{role:'assistant',content:'a'.repeat(4000)}
+  ]).flat();`,context);
+  const messages=JSON.parse(vm.runInContext('JSON.stringify(buildChatMessages("q".repeat(1200)))',context));
+  assert.ok(messages.length<=8);
+  assert.ok(messages.every(message=>message.content.length<=1200));
+  assert.ok(messages.reduce((sum,message)=>sum+message.content.length,0)<=6000);
+  assert.equal(messages[0].role,'user');
+  assert.equal(messages.at(-1).role,'user');
+  assert.equal(messages.at(-1).content,'q'.repeat(1200));
+});
+test('hosted chat source links and service errors retain explicit boundaries',()=>{
+  const context=load();
+  assert.equal(vm.runInContext('officialChatUrl("https://scienceacademy.lausd.org/program")',context),'https://scienceacademy.lausd.org/program');
+  assert.equal(vm.runInContext('officialChatUrl("https://sites.google.com/lausd.net/orthoprojects/about")',context),'https://sites.google.com/lausd.net/orthoprojects/about');
+  for(const url of ['javascript:alert(1)','https://lausd.org.evil.test/program','http://school.lausd.org/','https://sites.google.com/view/unreviewed']) {
+    context.badUrl=url;
+    assert.equal(vm.runInContext('officialChatUrl(badUrl)',context),null);
+  }
+  assert.equal(vm.runInContext('chatErrorKey(503,{error:{code:"NOT_CONFIGURED"}})',context),'chatNotConfigured');
+  assert.equal(vm.runInContext('chatErrorKey(429,{error:{code:"RATE_LIMITED"}})',context),'chatLimit');
+  assert.equal(vm.runInContext('chatErrorKey(504,{error:{code:"TIMEOUT"}})',context),'chatTimeout');
 });
 
 test('shared shortlist round-trips only known schools and enforces the three-school limit',async()=>{

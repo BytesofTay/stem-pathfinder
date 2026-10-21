@@ -15,6 +15,7 @@ export default defineConfig({
     env: {
       PORT: "4191",
       HOST: "127.0.0.1",
+      CHAT_ENABLED: "false",
       STEM_PATH_DB: path.join(process.cwd(), "data", "playwright.sqlite"),
     },
     url: "http://127.0.0.1:4191/api/health",

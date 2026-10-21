@@ -12,6 +12,7 @@ A bilingual school exploration prototype from **The STEM in Me**. Families choos
 - Save schools and compare up to three, with printing and a shareable shortlist. Shared links contain school names; they do not include checklist marks or private account data.
 - Follow the sourced 2027–28 application dates and a browser-local preparation checklist. Marks do not establish submission to LAUSD.
 - View campus locations on a map. Known off-campus programs do not link to misleading campus directions.
+- Ask the hosted AI helper about reviewed programs in English or Spanish, open its official citations, and add schools to the three-school comparison.
 
 Interest matching uses the reviewed program metadata, never numerical school ratings or school-name keyword guesses. Campus grades do not establish the specific program’s entry grades, eligibility, current seats, or admission outcome. See [DATA_PROVENANCE.md](DATA_PROVENANCE.md) and [program evidence](docs/PROGRAM_EVIDENCE.md).
 
@@ -35,7 +36,9 @@ The frontend is buildless HTML/CSS/JavaScript in `lausd_magnet_app/web/`. Local 
 | `web/program_evidence.js` | Human-reviewed official program facts and Spanish translations |
 | `web/schools_data.js` | Dated CDE campus snapshot with CDS IDs and actual grades |
 | `web/application-guide.js` | Year-specific official dates and local preparation checklist |
-| `web/i18n.js`, `web/chat.js` | Bilingual copy and rule-based help |
+| `web/i18n.js`, `web/chat.js` | Bilingual copy and hosted AI chat client |
+| `netlify/functions/chat.mjs`, `netlify/functions/lib/chat-*.mjs` | Hosted AI, reviewed-catalog tools, HTTP bounds, and shared usage limits |
+| `scripts/build-chat-data.cjs` | Validated server catalog generation and freshness check |
 | `update_schools.py` | Validated data refresh and review report; never deploys |
 
 Paths beginning `web/` are under `lausd_magnet_app/`.
@@ -44,15 +47,16 @@ Paths beginning `web/` are under `lausd_magnet_app/`.
 
 ```sh
 npm run test:unit
+npm run check:chat-data
 npm run test:api
 npm run test:e2e
 python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 ```
 
-Node unit checks cover real grade ranges, unknown-data abstention, metadata-only matching, safe rendering, share-link inputs, program joins/translations, location caveats, application-date boundaries, and help responses. The API test checks persistence across restart and guest isolation. Seven Playwright flows target the Node-backed app, including favorites, editable shared shortlists, reopened map-popup controls, current guide copy, and Spanish mobile keyboard use. Chromium must be installed separately for those browser tests.
+Node unit checks cover grade ranges, reviewed evidence, safe rendering, share links, dated guidance, the actual AI SDK tool loop with mock models, citation validation, comparison proposals, and atomic shared usage limits. API tests exercise local HTTP boundaries, persistence across restart, and guest isolation. Playwright checks the finder, favorites, shared shortlists, map controls, application guide, sourced chat, comparison actions, retries, and Spanish mobile use. Chromium must be installed separately for browser tests.
 
-The separate FastAPI scoring experiment remains isolated from the family-facing app. Its provider calls are mocked by tests; no paid API key is needed to use this website or run the tests.
+The separate FastAPI scoring experiment remains isolated from the family-facing app. Provider calls are mocked by tests; no paid API key is needed to run the tests or browse the website. Hosted chat uses Netlify AI Gateway credits or a server-only OpenAI connection. See [hosted chat setup and limits](docs/HOSTED_CHAT.md).
 
 ## Data refresh and publishing
 

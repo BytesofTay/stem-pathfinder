@@ -1,80 +1,373 @@
-/* A small, sourced help menu; no model calls or unsupported school ratings. */
-let chatOpen=false;
-const quickReplies=()=>[
-  {l:t('qrFind'),m:'find a school'}, {l:t('qrApply'),m:'application dates'},
-  {l:t('qrScores'),m:'about matches'}, {l:t('qrBrowse'),m:'browse all schools'}
+/* Hosted, source-grounded chat. Transcript and retry state remain in memory. */
+let chatOpen = false;
+let chatBusy = false;
+let chatHasStarted = false;
+let chatHistory = [];
+let chatRetryRequest = null;
+let chatErrorState = null;
+let chatController = null;
+let chatRequestSequence = 0;
+let chatRetryTimer = null;
+const CHAT_USER_LIMIT = 1200;
+const CHAT_HISTORY_LIMIT = 8;
+const CHAT_HISTORY_CHAR_LIMIT = 6000;
+
+const quickReplies = () => [
+  { l: t('chatPromptMedical'), m: t('chatPromptMedical') },
+  { l: t('chatPromptEngineering'), m: t('chatPromptEngineering') },
+  { l: t('chatPromptApply'), m: t('chatPromptApply') },
 ];
 function toggleChat() {
-  chatOpen=!chatOpen;
-  const panel=document.getElementById('chat-window');
-  panel.classList.toggle('hidden',!chatOpen); panel.setAttribute('aria-hidden',String(!chatOpen));
-  document.getElementById('chat-fab').setAttribute('aria-expanded',String(chatOpen));
-  if(chatOpen) {
-    if(!document.getElementById('chat-messages').children.length) botSay(escapeHtml(t('chatWelcome')));
-    document.getElementById('chat-input').focus();
+  chatOpen = !chatOpen;
+  const panel = document.getElementById('chat-window');
+  panel.classList.toggle('hidden', !chatOpen);
+  panel.setAttribute('aria-hidden', String(!chatOpen));
+  document.getElementById('chat-fab').setAttribute('aria-expanded', String(chatOpen));
+  if (chatOpen) {
+    if (!document.getElementById('chat-messages').children.length) botSay(t('chatWelcome'));
+    refreshChatI18n();
+    if (!chatBusy) document.getElementById('chat-input').focus();
+  } else document.getElementById('chat-fab').focus();
+}
+function appendChatMessage(role, text) {
+  const messages = document.getElementById('chat-messages');
+  const row = document.createElement('article');
+  row.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+  if (role !== 'user') {
+    const avatar = document.createElement('span');
+    avatar.className = 'msg-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = '✦';
+    row.appendChild(avatar);
   }
+  const body = document.createElement('div');
+  body.className = 'msg-bubble';
+  const paragraph = document.createElement('p');
+  paragraph.className = 'chat-answer';
+  paragraph.textContent = text;
+  body.appendChild(paragraph);
+  row.appendChild(body);
+  messages.appendChild(row);
+  scrollChatToEnd();
+  return body;
 }
-function botSay(html,showQR=true) {
-  const messages=document.getElementById('chat-messages');
-  const bubble=document.createElement('div'); bubble.className='msg bot';
-  bubble.innerHTML=`<div class="msg-avatar" aria-hidden="true">💬</div><div class="msg-bubble">${html.replace(/\n/g,'<br>')}</div>`;
-  messages.appendChild(bubble); messages.scrollTop=messages.scrollHeight;
-  if(showQR) renderQR();
-}
-function userSay(text) {
-  const messages=document.getElementById('chat-messages');
-  const bubble=document.createElement('div'); bubble.className='msg user';
-  const content=document.createElement('div'); content.className='msg-bubble'; content.textContent=text;
-  bubble.appendChild(content); messages.appendChild(bubble); messages.scrollTop=messages.scrollHeight;
-  document.getElementById('chat-qr').replaceChildren();
+function botSay(text) { return appendChatMessage('assistant', String(text)); }
+function userSay(text) { return appendChatMessage('user', String(text)); }
+function scrollChatToEnd() {
+  const messages = document.getElementById('chat-messages');
+  if (messages) messages.scrollTop = messages.scrollHeight;
 }
 function renderQR() {
-  const panel=document.getElementById('chat-qr'); panel.replaceChildren();
-  quickReplies().forEach(reply=>{
-    const button=document.createElement('button'); button.className='qr-btn'; button.textContent=reply.l;
-    button.addEventListener('click',()=>handleMsg(reply.m)); panel.appendChild(button);
+  const panel = document.getElementById('chat-qr');
+  if (!panel) return;
+  panel.hidden = chatHasStarted;
+  panel.replaceChildren();
+  quickReplies().forEach(reply => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'qr-btn';
+    button.textContent = reply.l;
+    button.disabled = chatBusy;
+    button.addEventListener('click', () => handleMsg(reply.m));
+    panel.appendChild(button);
   });
 }
+function updateChatInputState() {
+  const input = document.getElementById('chat-input');
+  const counter = document.getElementById('chat-counter');
+  if (counter) counter.textContent = (input ? input.value.length : 0) + '/' + CHAT_USER_LIMIT;
+  const send = document.getElementById('chat-send');
+  if (send) send.disabled = chatBusy || !input || !input.value.trim();
+}
+function refreshChatI18n() {
+  const labels = {
+    'chat-privacy': 'chatPrivacy', 'chat-new': 'chatNew', 'chat-loading-text': 'chatLoading',
+    'chat-input-label': 'chatInputLabel', 'chat-citation-hint': 'chatSourceHint',
+  };
+  Object.entries(labels).forEach(([id, key]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = t(key);
+  });
+  const input = document.getElementById('chat-input');
+  if (input) { input.placeholder = t('chatPlaceholder'); input.setAttribute('aria-label', t('chatInputLabel')); }
+  const panel = document.getElementById('chat-window');
+  if (panel) panel.setAttribute('aria-label', t('chatName'));
+  const send = document.getElementById('chat-send');
+  if (send) send.setAttribute('aria-label', t('chatSend'));
+  document.querySelectorAll('[data-chat-close]').forEach(button =>
+    button.setAttribute('aria-label', t(button.dataset.chatClose === 'minimize' ? 'chatMinimize' : 'closeChat')));
+  renderQR();
+  renderChatError();
+  updateChatInputState();
+}
+function setChatBusy(busy) {
+  chatBusy = busy;
+  document.getElementById('chat-messages').setAttribute('aria-busy', String(busy));
+  document.getElementById('chat-input').disabled = busy;
+  document.getElementById('chat-loading').hidden = !busy;
+  document.getElementById('chat-new').disabled = busy;
+  renderQR();
+  updateChatInputState();
+}
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    sendMsg();
+  }
+}
 function sendMsg() {
-  const input=document.getElementById('chat-input'); const text=input.value.trim();
-  if(!text) return; input.value=''; userSay(text); handleMsg(text);
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || chatBusy) return;
+  if (text.length > CHAT_USER_LIMIT) {
+    chatErrorState = { key: 'chatTooLong', retryable: false };
+    renderChatError();
+    return;
+  }
+  input.value = '';
+  return handleMsg(text);
 }
 function handleMsg(text) {
-  const m=text.toLowerCase(); const es=LANG==='es';
-  if(/apply|application|enroll|deadline|when|date|open|close|fecha|cu[aá]ndo|plazo|l[ií]mite|solicit|aplic|inscrib/.test(m)) {
-    botSay(applicationDatesSummaryHtml()+`<br><br><a href="#application-guide">${escapeHtml(t('guideLink'))}</a><br>`+escapeHtml(t('guideIntro'))); return;
+  if (chatBusy || typeof text !== 'string' || !text.trim()) return;
+  text = text.trim();
+  if (text.length > CHAT_USER_LIMIT) {
+    chatErrorState = { key: 'chatTooLong', retryable: false }; renderChatError(); return;
   }
-  if(/score|rating|quality|equity|about matches|mean|puntaje|calific|calidad|equidad|coincid|significa/.test(m)) {
-    botSay(escapeHtml(t('modalAccessTxt'))+'<br><br>'+escapeHtml(t('modalEquityTxt'))); return;
+  const messages = buildChatMessages(text);
+  const request = { messages, language: LANG === 'es' ? 'es' : 'en', comparisonSchoolIds: getComparisonSchoolIds() };
+  chatHasStarted = true;
+  userSay(text);
+  return requestChat(request);
+}
+function buildChatMessages(text) {
+  const recent = chatHistory.slice(-(CHAT_HISTORY_LIMIT - 2)).map(message => ({
+    role: message.role, content: String(message.content).slice(0, CHAT_USER_LIMIT),
+  }));
+  while (recent.length && recent[0].role !== 'user') recent.shift();
+  const messages = [...recent, { role: 'user', content: text }];
+  while (messages.length > 1 && messages.reduce((sum, message) => sum + message.content.length, 0) > CHAT_HISTORY_CHAR_LIMIT) {
+    messages.splice(0, Math.min(2, messages.length - 1));
   }
-  if(/transport|\bbus\b/.test(m)) {
-    botSay(es?'Confirme con LAUSD y con la escuela si hay transporte para su domicilio y el programa elegido.':'Check transportation availability for your address and chosen program with LAUSD and the school.');
-    botSay(`<a href="https://transportation.lausd.org" target="_blank" rel="noopener noreferrer">${escapeHtml(t('transportation'))}</a>`); return;
+  return messages;
+}
+function chatErrorKey(status, data) {
+  const code = String(data && (data.code || data.error && data.error.code || data.error) || '').toUpperCase();
+  if (status === 429 || code === 'RATE_LIMITED' || code === 'RATE_LIMIT') return 'chatLimit';
+  if (code === 'NOT_CONFIGURED' || code === 'CHAT_NOT_CONFIGURED' || code === 'SERVICE_NOT_CONFIGURED' || code === 'AI_NOT_CONFIGURED') return 'chatNotConfigured';
+  if (status === 400 || status === 413 || code === 'BAD_REQUEST' || code === 'INVALID_REQUEST') return 'chatRequestInvalid';
+  if (status === 504 || code === 'TIMEOUT') return 'chatTimeout';
+  return 'chatUnavailable';
+}
+async function requestChat(request) {
+  const sequence = ++chatRequestSequence;
+  chatRetryRequest = request;
+  chatErrorState = null;
+  renderChatError();
+  setChatBusy(true);
+  chatController = new AbortController();
+  const timer = setTimeout(() => chatController && chatController.abort(), 30000);
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request), signal: chatController.signal,
+    });
+    let data;
+    try { data = await response.json(); }
+    catch {
+      if (response.ok) throw new Error('invalid-response');
+      data = {};
+    }
+    if (sequence !== chatRequestSequence) return;
+    if (!response.ok) {
+      const key = chatErrorKey(response.status, data);
+      const retryAfter = Number(response.headers.get('Retry-After') || data && data.retryAfterSeconds || 0);
+      chatErrorState = { key, retryable: key !== 'chatNotConfigured' && key !== 'chatRequestInvalid',
+        retryAt: key === 'chatLimit' ? Date.now() + (Number.isFinite(retryAfter) ? Math.min(Math.max(retryAfter, 1), 86400) : 60) * 1000 : 0 };
+      renderChatError();
+      return;
+    }
+    if (data.mode !== 'hosted-ai' || typeof data.answer !== 'string' || !data.answer.trim() || data.answer.length > 24000) throw new Error('invalid-response');
+    const body = botSay(data.answer);
+    renderChatCitations(body, data.citations);
+    renderChatPrograms(body, data.programs);
+    runChatActions(body, data.actions);
+    chatHistory = [...request.messages, { role: 'assistant', content: data.answer.slice(0, CHAT_USER_LIMIT) }].slice(-CHAT_HISTORY_LIMIT);
+    chatRetryRequest = null;
+    scrollChatToEnd();
+  } catch (error) {
+    if (sequence !== chatRequestSequence) return;
+    chatErrorState = { key: error && error.name === 'AbortError' ? 'chatTimeout' : 'chatUnavailable', retryable: true };
+    renderChatError();
+  } finally {
+    clearTimeout(timer);
+    if (sequence === chatRequestSequence) { chatController = null; setChatBusy(false); renderChatError(); }
   }
-  if(/^(find a school|start|quiz|match)|help me find|empezar|comenzar|cuestionario|ayuda a encontrar/.test(m)) {
-    toggleChat(); startQuiz(); return;
+}
+function renderChatError() {
+  const panel = document.getElementById('chat-error');
+  if (!panel) return;
+  clearTimeout(chatRetryTimer);
+  panel.replaceChildren();
+  panel.hidden = !chatErrorState;
+  if (!chatErrorState) return;
+  const message = document.createElement('p');
+  message.textContent = t(chatErrorState.key);
+  panel.appendChild(message);
+  if (chatErrorState.retryable && chatRetryRequest) {
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.id = 'chat-retry';
+    retry.textContent = t('chatRetry');
+    retry.disabled = chatBusy || Number(chatErrorState.retryAt || 0) > Date.now();
+    retry.addEventListener('click', () => {
+      if (!chatBusy && chatRetryRequest) requestChat({ ...chatRetryRequest, language: LANG === 'es' ? 'es' : 'en', comparisonSchoolIds: getComparisonSchoolIds() });
+    });
+    panel.appendChild(retry);
+    if (Number(chatErrorState.retryAt || 0) > Date.now()) chatRetryTimer = setTimeout(renderChatError, chatErrorState.retryAt - Date.now() + 20);
   }
-  if(/browse|all schools|see all|show all|todas las escuelas|ver todas|explorar/.test(m)) { toggleChat(); scrollToBrowse(); return; }
-  if(/\b(map|where|location|near|mapa)\b|d[oó]nde|ubicaci[oó]n|cerca/.test(m)) { toggleChat(); switchTab('map'); return; }
-  if(/saved|favorite|heart|wishlist|guardad|favorit|coraz[oó]n|compar/.test(m)) { toggleChat(); switchTab('saved'); return; }
-  if(/^(home|restart|inicio|volver)$|start over|empezar de nuevo/.test(m)) { toggleChat(); showHero(); return; }
-  const named=allSchools.filter(s=>s.name.toLocaleLowerCase().includes(m)).slice(0,4);
-  if(m.length>=3 && named.length && named.length<=3) {
-    botSay(named.map(s=>`<strong>${escapeHtml(s.name)}</strong><br>${escapeHtml(gradeLabel(s))}<br>${schoolDetailsHtml(s,{compact:true})}`).join('<br><br>')); return;
+}
+function resetChat() {
+  ++chatRequestSequence;
+  if (chatController) chatController.abort();
+  chatController = null;
+  chatHistory = [];
+  chatHasStarted = false;
+  chatRetryRequest = null;
+  chatErrorState = null;
+  clearTimeout(chatRetryTimer);
+  document.getElementById('chat-messages').replaceChildren();
+  document.getElementById('chat-input').value = '';
+  botSay(t('chatWelcome'));
+  setChatBusy(false);
+  renderChatError();
+  document.getElementById('chat-input').focus();
+}
+function officialChatUrl(value) {
+  const normalized = SchoolUtils.safeUrl(value);
+  if (!normalized) return null;
+  const url = new URL(normalized);
+  const host = url.hostname.toLowerCase();
+  const official = ['lausd.org', 'lausd.net', 'cde.ca.gov', 'data.ca.gov'].some(domain => host === domain || host.endsWith('.' + domain)) ||
+    host === 'sites.google.com' && url.pathname.startsWith('/lausd.net/');
+  return url.protocol === 'https:' && official ? url.href : null;
+}
+function appendChatSource(parent, source) {
+  const url = officialChatUrl(source && (source.url || source.sourceUrl));
+  if (!url) return false;
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = String(source.title || t('sourceDetails')).slice(0, 240);
+  parent.appendChild(link);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(source.checkedAt || '')) {
+    const date = document.createElement('time');
+    date.dateTime = source.checkedAt;
+    date.textContent = t('sourceChecked', { date: source.checkedAt });
+    parent.appendChild(date);
+  } else {
+    const unknown = document.createElement('span');
+    unknown.textContent = t('chatDateUnknown');
+    parent.appendChild(unknown);
   }
-  const interests=[];
-  if(/medical|medicine|health|biotech|m[eé]dic|medicina|salud|biotecnolog/.test(m)) interests.push('medical');
-  if(/computer|coding|robot|technology|comput|tecnolog|programaci[oó]n/.test(m)) interests.push('tech');
-  if(/engineer|aerospace|ingenier/.test(m)) interests.push('engineer');
-  if(/science|nature|ciencia|naturaleza|stem/.test(m)) interests.push('science');
-  if(/\barts|music|film|arte|m[uú]sica|cine|teatro/.test(m)) interests.push('arts');
-  const number=m.match(/(?:grade|grado)\s*(1[0-2]|[1-9])\b/) || m.match(/\b(1[0-2]|[1-9])(?:st|nd|rd|th)?\s*(?:grade|grado)\b/);
-  const grade=number?number[1]:/kinder|kindergarten|k[ií]nder/.test(m)?'K':/middle|secundaria/.test(m)?'mid':/high school|preparatoria/.test(m)?'high':/elementary|primaria/.test(m)?'elem':'';
-  if(interests.length || grade) {
-    const matches=(grade ? matchSchools(grade,interests.length?interests:['any']) : allSchools.filter(school=>interests.some(interest=>verifiedInterestsForSchool(school).includes(interest))).sort((a,b)=>a.name.localeCompare(b.name))).slice(0,5);
-    if(!matches.length) { botSay(escapeHtml(t('noMatches'))); return; }
-    const intro=es?'Estas opciones coinciden con los grados publicados y los intereses revisados. No están calificadas por calidad.':'These options match published grades and reviewed interests. They are not ranked by school quality.';
-    botSay(escapeHtml(intro)+'<br><br>'+matches.map(s=>`<strong>${escapeHtml(s.name)}</strong><br>${escapeHtml(gradeLabel(s))}<br>${schoolDetailsHtml(s,{compact:true})}`).join('<br><br>')); return;
-  }
-  botSay(escapeHtml(es?'Puedo ayudarle a buscar programas, comparar escuelas guardadas o consultar fechas oficiales. Use una opción de abajo o busque el nombre de una escuela.':'I can help you find programs, compare saved schools, or check official application dates. Choose an option below or search for a school by name.'));
+  return true;
+}
+function renderChatCitations(parent, citations) {
+  if (!Array.isArray(citations)) return;
+  const section = document.createElement('section');
+  section.className = 'chat-sources';
+  const heading = document.createElement('h3');
+  heading.textContent = t('chatSources');
+  section.appendChild(heading);
+  const list = document.createElement('ol');
+  citations.slice(0, 12).forEach(source => {
+    if (!source || typeof source !== 'object') return;
+    const item = document.createElement('li');
+    if (appendChatSource(item, source)) {
+      const reference = document.createElement('span');
+      reference.className = 'chat-source-id';
+      reference.textContent = '[' + (list.children.length + 1) + '] ';
+      item.prepend(reference);
+      list.appendChild(item);
+    }
+  });
+  if (list.children.length) { section.appendChild(list); parent.appendChild(section); }
+}
+function renderChatPrograms(parent, programs) {
+  if (!Array.isArray(programs)) return;
+  const container = document.createElement('div');
+  container.className = 'chat-programs';
+  programs.slice(0, 6).forEach(program => {
+    if (!program || typeof program !== 'object' || !officialChatUrl(program.sourceUrl)) return;
+    const card = document.createElement('article');
+    card.className = 'chat-program-card';
+    const heading = document.createElement('h3');
+    heading.textContent = String(program.programName || program.schoolName || t('verifiedProgram'));
+    card.appendChild(heading);
+    const school = allSchools.find(record => SchoolUtils.schoolId(record) === program.schoolId);
+    const campus = document.createElement('p');
+    campus.className = 'chat-program-campus';
+    campus.textContent = school ? school.name : String(program.schoolName || '');
+    card.appendChild(campus);
+    const description = document.createElement('p');
+    description.textContent = String(LANG === 'es' ? program.descriptionEs || program.description || '' : program.description || '').slice(0, 4000);
+    card.appendChild(description);
+    if (school) {
+      const grades = document.createElement('p');
+      grades.textContent = gradeLabel(school);
+      card.appendChild(grades);
+    }
+    const eligibility = LANG === 'es' ? program.eligibilityNoteEs || program.eligibilityNote : program.eligibilityNote;
+    const locationNote = LANG === 'es' ? program.locationNoteEs || program.locationNote : program.locationNote;
+    for (const value of [eligibility, locationNote]) {
+      if (typeof value !== 'string' || !value.trim()) continue;
+      const note = document.createElement('p');
+      note.className = 'chat-program-note';
+      note.textContent = value.slice(0, 2000);
+      card.appendChild(note);
+    }
+    const source = document.createElement('p');
+    source.className = 'chat-program-source';
+    appendChatSource(source, { sourceUrl: program.sourceUrl, title: t('sourceDetails'), checkedAt: program.checkedAt });
+    card.appendChild(source);
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'chat-add-school';
+    add.textContent = t('chatAddComparison');
+    add.disabled = !school;
+    const result = document.createElement('p');
+    result.className = 'chat-action-result';
+    result.setAttribute('role', 'status');
+    if (!school) result.textContent = t('chatUnknownSchool');
+    add.addEventListener('click', () => showChatActionResult(result, [program.schoolId]));
+    card.appendChild(add);
+    card.appendChild(result);
+    container.appendChild(card);
+  });
+  if (container.children.length) parent.appendChild(container);
+}
+function showChatActionResult(target, ids) {
+  let result;
+  try { result = addSchoolIdsToComparison(ids); }
+  catch { target.textContent = t('chatActionFailed'); return; }
+  const parts = [];
+  if (result.added.length) parts.push(t('chatActionAdded', { names: result.added.join(', ') }));
+  if (result.existing.length) parts.push(t('chatActionExisting', { names: result.existing.join(', ') }));
+  if (result.rejected.some(item => item.reason === 'limit')) parts.push(t('compareLimit'));
+  if (result.rejected.some(item => item.reason !== 'limit')) parts.push(t('chatUnknownSchool'));
+  if (!result.persisted) parts.push(t('chatLocalOnly'));
+  if (!parts.length) parts.push(t('chatActionFailed'));
+  target.textContent = parts.join(' ');
+}
+function runChatActions(parent, actions) {
+  if (!Array.isArray(actions)) return;
+  actions.slice(0, 3).forEach(action => {
+    if (!action || action.type !== 'add_to_comparison' || !Array.isArray(action.schoolIds)) return;
+    const status = document.createElement('p');
+    status.className = 'chat-action-result chat-model-action';
+    status.setAttribute('role', 'status');
+    parent.appendChild(status);
+    showChatActionResult(status, action.schoolIds.slice(0, 12));
+  });
 }

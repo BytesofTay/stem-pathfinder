@@ -25,6 +25,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: npm ci
+      - run: npm run check:chat-data
       - run: npm run test:unit
       - run: npm run test:api
       - run: npx playwright install --with-deps chromium
