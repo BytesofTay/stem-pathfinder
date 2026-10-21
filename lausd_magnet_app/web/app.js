@@ -187,6 +187,31 @@ function toggleCompare(name) {
   syncSchoolButtons();
   if (currentTab === 'saved') renderSaved();
 }
+/* Hosted chat can add known schools, never toggle an existing choice off. */
+function getComparisonSchoolIds() {
+  return allSchools.filter(school => compared.has(school.name)).map(SchoolUtils.schoolId);
+}
+function addSchoolIdsToComparison(ids) {
+  const result = { added: [], existing: [], rejected: [], total: compared.size, persisted: true };
+  for (const id of [...new Set(Array.isArray(ids) ? ids : [])]) {
+    if (typeof id !== 'string' || !/^\d{14}$/.test(id)) { result.rejected.push({ id: String(id), reason: 'invalid' }); continue; }
+    const school = allSchools.find(record => SchoolUtils.schoolId(record) === id);
+    if (!school) { result.rejected.push({ id, reason: 'not_found' }); continue; }
+    if (compared.has(school.name)) { result.existing.push(school.name); continue; }
+    if (compared.size >= 3) { result.rejected.push({ id, reason: 'limit' }); continue; }
+    compared.add(school.name);
+    result.added.push(school.name);
+  }
+  result.total = compared.size;
+  if (result.added.length) {
+    try { localStorage.setItem(COMPARE_KEY, JSON.stringify([...compared])); }
+    catch { result.persisted = false; }
+    if (location.hash.startsWith('#shortlist/')) history.replaceState(null, '', '#shortlist/' + encodeURIComponent(JSON.stringify([...compared])));
+    syncSchoolButtons();
+    if (currentTab === 'saved') renderSaved();
+  }
+  return result;
+}
 function comparisonHtml() {
   const schools = allSchools.filter(school => compared.has(school.name));
   return '<section class="comparison-panel" id="comparison-panel" aria-label="' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '">' +

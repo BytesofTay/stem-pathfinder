@@ -52,8 +52,24 @@ function readJson(req) {
 }
 
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const chatHandler = Promise.all([
+  import('./netlify/functions/lib/chat-http.mjs'),
+  import('./netlify/functions/lib/chat-limit.mjs'),
+]).then(([{ createChatHandler }, { createChatLimiter, createLocalUsageStore }]) =>
+  createChatHandler({ reserve: createChatLimiter({ store: createLocalUsageStore() }) }));
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname === '/api/chat') {
+    try {
+      const request = new Request(`http://${req.headers.host}${req.url}`, {
+        method: req.method, headers: req.headers,
+        ...(!['GET', 'HEAD'].includes(req.method) ? { body: req, duplex: 'half' } : {}),
+      });
+      const response = await (await chatHandler)(request, { ip: req.socket.remoteAddress });
+      res.writeHead(response.status, Object.fromEntries(response.headers));
+      return res.end(Buffer.from(await response.arrayBuffer()));
+    } catch { return send(res, 503, { error: { code: 'UNAVAILABLE', message: 'Chat is temporarily unavailable.' } }); }
+  }
   if (url.pathname === '/api/health' && req.method === 'GET') return send(res, 200, { ok: true });
   if (url.pathname === '/api/favorites') {
     const id = visitorId(req, res);

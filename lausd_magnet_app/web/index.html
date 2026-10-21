@@ -228,33 +228,47 @@
   </div>
 </div>
 
-<!-- ── CHATBOT ────────────────────────── -->
+<!-- ── HOSTED AI CHAT ───────────────────── -->
 <button class="chat-fab" onclick="toggleChat()" id="chat-fab"
-        aria-label="Open help chat" aria-expanded="false">
-  <span aria-hidden="true">💬</span> Help
-  <span class="fab-dot" aria-hidden="true"></span>
+        aria-label="Open AI school chat" aria-expanded="false" aria-controls="chat-window">
+  <span aria-hidden="true">✦</span> Ask AI
 </button>
 
-<div class="chat-window hidden" id="chat-window"
-     role="dialog" aria-modal="false" aria-label="School Helper chat" aria-hidden="true">
-  <div class="chat-header">
-    <div class="chat-avatar" aria-hidden="true">🤖</div>
+<section class="chat-window hidden" id="chat-window"
+     role="dialog" aria-modal="false" aria-label="STEM Pathfinder AI" aria-hidden="true">
+  <header class="chat-header">
+    <span class="chat-avatar" aria-hidden="true">✦</span>
     <div class="chat-header-info">
-      <div class="chat-header-name">School Helper</div>
-      <div class="chat-header-status">Here to help LAUSD families</div>
+      <h2 class="chat-header-name">STEM Pathfinder AI</h2>
+      <p class="chat-header-status">Hosted AI · reviewed program sources</p>
     </div>
-    <button class="chat-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
+    <div class="chat-window-controls">
+      <button class="chat-minimize" onclick="toggleChat()" data-chat-close="minimize" aria-label="Minimize AI chat">−</button>
+      <button class="chat-close" onclick="toggleChat()" data-chat-close="close" aria-label="Close AI school chat">×</button>
+    </div>
+  </header>
+  <p class="chat-privacy" id="chat-privacy">Questions are sent to a hosted AI service. No names, exact addresses, or other personal child details are needed.</p>
+  <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-relevant="additions" aria-busy="false"></div>
+  <div class="chat-loading" id="chat-loading" role="status" hidden>
+    <span class="chat-loading-dot" aria-hidden="true"></span><span id="chat-loading-text">Checking reviewed program information…</span>
   </div>
-  <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
-  <div class="chat-quick-replies" id="chat-qr" aria-label="Quick reply options"></div>
+  <div class="chat-error" id="chat-error" role="alert" hidden></div>
+  <div class="chat-quick-replies" id="chat-qr" aria-label="Suggested questions"></div>
+  <p class="chat-source-hint" id="chat-citation-hint">Confirm important details with the linked official sources.</p>
+  <label class="chat-input-label" id="chat-input-label" for="chat-input">Your question</label>
   <div class="chat-input-row">
-    <input class="chat-input" id="chat-input" type="text"
-           placeholder="Ask me anything…"
-           onkeydown="if(event.key==='Enter')sendMsg()"
-           aria-label="Type a message" autocomplete="off">
-    <button class="chat-send" onclick="sendMsg()" id="chat-send" aria-label="Send message">↑</button>
+    <textarea class="chat-input" id="chat-input" rows="2" maxlength="1200"
+           placeholder="Ask about programs, requirements, or your comparison…"
+           onkeydown="handleChatKeydown(event)" oninput="updateChatInputState()"
+           aria-label="Your question" aria-describedby="chat-privacy chat-keyboard-hint" autocomplete="off"></textarea>
+    <button class="chat-send" onclick="sendMsg()" id="chat-send" aria-label="Send message" disabled>↑</button>
   </div>
-</div>
+  <div class="chat-input-tools">
+    <span class="chat-keyboard-hint" id="chat-keyboard-hint" data-i18n="chatKeyboardHint">Enter sends · Shift+Enter adds a line</span>
+    <span id="chat-counter" class="chat-counter" aria-hidden="true">0/1200</span>
+    <button type="button" id="chat-new" onclick="resetChat()">New chat</button>
+  </div>
+</section>
 
 <!-- ── SCRIPTS ────────────────────────── -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
