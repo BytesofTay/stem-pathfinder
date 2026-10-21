@@ -143,3 +143,56 @@ test('check mode detects changed source inputs and never silently repairs stale 
   assert.notEqual(regenerated.dataRevision, initial.dataRevision);
   assert.equal(generateCatalog({ rootDir: temporaryRoot, check: true }).changed, false);
 });
+
+test('application metadata is generated from the shared canonical input and frozen', async () => {
+  const catalog = await import(pathToFileURL(path.join(ROOT_DIR, OUTPUT_PATH)).href);
+  const input = sources();
+  assert.deepEqual(catalog.APPLICATION_GUIDANCE, input.application);
+  assert.equal(catalog.APPLICATION_GUIDANCE.sourceId, 'application:choices:2027-28');
+  assert.equal(catalog.APPLICATION_GUIDANCE.applySourceId, 'application:portal:choices-2027-28');
+  assert.equal(catalog.SOURCE_INFO.applicationGuidance.checkedAt, '2026-10-21');
+  assert.equal(Object.isFrozen(catalog.APPLICATION_GUIDANCE.checklist[0]), true);
+  assert.match(catalog.SOURCE_INFO.sourceInputHashes[INPUT_PATHS.application], /^[a-f0-9]{64}$/u);
+});
+
+test('application facts reject unsafe sources, invented precision, broken cycles, and missing translations', () => {
+  const cases = [
+    [input => { input.application.closes = '2026-02-30'; }, /calendar date/u],
+    [input => { input.application.lateOpens = '2026-11-01'; }, /date sequence/u],
+    [input => { input.application.reviewBy = '2026-10-01'; }, /review deadline/u],
+    [input => { input.application.sourceUrl = 'https://example.test/calendar'; }, /official source/u],
+    [input => { input.application.applyUrl = 'https://apply.lausd.net.evil.test'; }, /official source/u],
+    [input => { input.application.sourceTitleEs = '<script>bad</script>'; }, /plain text/u],
+    [input => { input.application.deadlineTime = '23:59'; }, /unknown times/u],
+    [input => { input.application.lateCloses = '2027-01-01'; }, /unknown times/u],
+    [input => { input.application.timeZone = 'UTC'; }, /Los Angeles/u],
+    [input => { input.application.cycleId = 'choices-2028-29'; }, /cycle\/year mismatch/u],
+    [input => { input.application.checklistStorageKey = 'stem_checklist_old'; }, /storage key/u],
+    [input => { delete input.application.checklist[0].textEs; }, /Spanish text/u]
+  ];
+  for (const [mutate, expected] of cases) {
+    const input = sources();
+    mutate(input);
+    assert.throws(() => buildCatalog(input), expected);
+  }
+});
+
+test('changed application dates invalidate generated server data without silently overwriting it', t => {
+  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stem-application-catalog-'));
+  t.after(() => fs.rmSync(temporaryRoot, { recursive: true, force: true }));
+  for (const relativePath of Object.values(INPUT_PATHS)) {
+    const target = path.join(temporaryRoot, relativePath);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(path.join(ROOT_DIR, relativePath), target);
+  }
+  const original = generateCatalog({ rootDir: temporaryRoot });
+  const outputPath = path.join(temporaryRoot, OUTPUT_PATH);
+  const originalOutput = fs.readFileSync(outputPath, 'utf8');
+  const applicationPath = path.join(temporaryRoot, INPUT_PATHS.application);
+  fs.writeFileSync(applicationPath, fs.readFileSync(applicationPath, 'utf8').replace("closes: '2026-11-06'", "closes: '2026-11-07'"));
+  assert.throws(() => generateCatalog({ rootDir: temporaryRoot, check: true }), /missing or stale/u);
+  assert.equal(fs.readFileSync(outputPath, 'utf8'), originalOutput);
+  const updated = generateCatalog({ rootDir: temporaryRoot });
+  assert.notEqual(updated.dataRevision, original.dataRevision);
+  assert.match(fs.readFileSync(outputPath, 'utf8'), /"closes": "2026-11-07"/u);
+});

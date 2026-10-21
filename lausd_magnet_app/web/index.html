@@ -163,7 +163,11 @@
     <div id="saved-panel" role="tabpanel" aria-labelledby="tab-saved"></div>
   </section>
 
-  <section id="application-guide" class="application-guide" aria-labelledby="application-guide-title"></section>
+  <section id="application-guide" class="application-guide" aria-labelledby="application-guide-title">
+    <h2 id="application-guide-title">Official application information</h2>
+    <p>Check the official LAUSD enrollment calendar for current dates and application requirements.</p>
+    <p><a href="https://www.lausd.org/apps/pages/index.jsp?uREC_ID=4432585&amp;type=d&amp;pREC_ID=2724498" target="_blank" rel="noopener noreferrer">LAUSD enrollment calendar</a> · <a href="https://apply.lausd.net" target="_blank" rel="noopener noreferrer">Official application portal</a></p>
+  </section>
 
   <!-- ABOUT -->
   <section class="about" id="about-section" aria-label="About The STEM in Me">
@@ -248,6 +252,10 @@
     </div>
   </header>
   <p class="chat-privacy" id="chat-privacy">Questions are sent to a hosted AI service. No names, exact addresses, or other personal child details are needed.</p>
+  <div id="chat-context" class="chat-context" hidden>
+    <p id="chat-context-label"></p><button id="chat-clear-context" type="button" onclick="clearChatContext()">Clear</button>
+  </div>
+  <p id="chat-context-status" class="chat-context-status" role="status"></p>
   <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-relevant="additions" aria-busy="false"></div>
   <div class="chat-loading" id="chat-loading" role="status" hidden>
     <span class="chat-loading-dot" aria-hidden="true"></span><span id="chat-loading-text">Checking reviewed program information…</span>
@@ -255,6 +263,10 @@
   <div class="chat-error" id="chat-error" role="alert" hidden></div>
   <div class="chat-quick-replies" id="chat-qr" aria-label="Suggested questions"></div>
   <p class="chat-source-hint" id="chat-citation-hint">Confirm important details with the linked official sources.</p>
+  <div class="chat-comparison-bar">
+    <span id="chat-comparison-count" role="status">Comparison 0/3</span>
+    <button type="button" data-chat-view-comparison onclick="viewChatComparison()">View comparison</button>
+  </div>
   <label class="chat-input-label" id="chat-input-label" for="chat-input">Your question</label>
   <div class="chat-input-row">
     <textarea class="chat-input" id="chat-input" rows="2" maxlength="1200"
@@ -276,6 +288,7 @@
 <script src="program_evidence.js?v=20261021"></script>
 <script src="i18n.js?v=20261021"></script>
 <script src="school-utils.js?v=20261021"></script>
+<script src="application-data.js?v=20261021"></script>
 <script src="application-guide.js?v=20261021"></script>
 <script src="app.js?v=20261021"></script>
 <script src="quiz.js?v=20261021"></script>

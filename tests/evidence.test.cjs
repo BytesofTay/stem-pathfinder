@@ -5,7 +5,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 function load() {
   const context=vm.createContext({URL, Intl, localStorage:{getItem(){return null;}}, document:{addEventListener(){}}});
-  for(const file of ['schools_data.js','program_evidence.js','school-utils.js','i18n.js','app.js','quiz.js','application-guide.js','chat.js']) {
+  for(const file of ['schools_data.js','program_evidence.js','school-utils.js','i18n.js','app.js','quiz.js','application-data.js','application-guide.js','chat.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname,'../lausd_magnet_app/web',file),'utf8'),context);
   }
   vm.runInContext('allSchools = SCHOOLS_DATA',context);
@@ -124,4 +124,41 @@ test('shared shortlist round-trips only known schools and enforces the three-sch
   assert.equal(vm.runInContext('initShortlistFromURL()',context),true);
   assert.equal(vm.runInContext('compared.size',context),3);
   assert.equal(vm.runInContext('compared.has("<script>bad</script>")',context),false);
+});
+
+test('context keeps real quiz preferences and only reviewed focused campuses',()=>{
+  const context=load();
+  vm.runInContext(`
+    const reviewed=PROGRAM_EVIDENCE[0].schoolId;
+    chatFocusedSchoolIds=[reviewed,'99999999999999'];
+    qAns={grade:'9',interest:['science','any','invented','science']};
+    chatLastProgramIds=['second-program','first-program'];
+    chatDataRevision='revision-1';
+  `,context);
+  const request=JSON.parse(vm.runInContext('JSON.stringify(getChatContext())',context));
+  assert.deepEqual(request.focusedSchoolIds,JSON.parse(vm.runInContext('JSON.stringify([PROGRAM_EVIDENCE[0].schoolId])',context)));
+  assert.deepEqual(request.interests,['science']);
+  assert.equal(request.grade,'9');
+  assert.deepEqual(request.lastProgramIds,['second-program','first-program']);
+  assert.equal(request.dataRevision,'revision-1');
+});
+test('catalog revision changes clear stale ordinal program context even on an empty reply',()=>{
+  const context=load();
+  vm.runInContext(`
+    rememberChatContext({dataRevision:'one',programs:[
+      {programId:'second',sourceUrl:'https://school.lausd.org/second'},
+      {programId:'first',sourceUrl:'https://school.lausd.org/first'}
+    ]});
+  `,context);
+  assert.equal(vm.runInContext('JSON.stringify(chatLastProgramIds)',context),'["second","first"]');
+  vm.runInContext("rememberChatContext({dataRevision:'two',programs:[]})",context);
+  assert.equal(vm.runInContext('chatLastProgramIds.length',context),0);
+  assert.equal(vm.runInContext('chatDataRevision',context),'two');
+});
+test('contextual AI entry points appear only for campuses with reviewed programs',()=>{
+  const context=load();
+  const reviewed=vm.runInContext('schoolActionButtons(SCHOOLS_DATA.find(s=>s.id===PROGRAM_EVIDENCE[0].schoolId))',context);
+  const unreviewed=vm.runInContext('schoolActionButtons(SCHOOLS_DATA.find(s=>getProgramEvidence(s).length===0))',context);
+  assert.match(reviewed,/data-action="ask-school"/);
+  assert.ok(!unreviewed.includes('ask-school'));
 });

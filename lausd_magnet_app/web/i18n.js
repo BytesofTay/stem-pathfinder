@@ -210,7 +210,18 @@ const I18N = {
     "chatActionAdded": "Added to your comparison: {names}.",
     "chatActionExisting": "Already in your comparison: {names}.",
     "chatLocalOnly": "These additions are available for this visit; browser storage is unavailable.",
-    "chatKeyboardHint": "Enter sends · Shift+Enter adds a line"
+    "chatKeyboardHint": "Enter sends · Shift+Enter adds a line",
+    "askSchoolAI": "Ask AI about this school",
+    "chatSchoolQuestion": "Tell me about {school}. What should I check before applying?",
+    "chatQuestionGrade": "I am looking at entry grade {grade}.",
+    "chatContextGrade": "Entry grade {grade}",
+    "chatContextLabel": "Context: {context}",
+    "chatClearContext": "Clear",
+    "chatContextBusy": "Your current question is still being answered. Your draft and context were kept.",
+    "chatComparisonCount": "Comparison {n}/3",
+    "chatViewComparison": "View comparison",
+    "chatSchoolAdded": "Added",
+    "chatComparisonFull": "Comparison full"
   },
   "es": {
     "home": "🏠 Inicio",
@@ -423,7 +434,18 @@ const I18N = {
     "chatActionAdded": "Se agregó a su comparación: {names}.",
     "chatActionExisting": "Ya está en su comparación: {names}.",
     "chatLocalOnly": "Las escuelas agregadas estarán disponibles durante esta visita; el almacenamiento del navegador no está disponible.",
-    "chatKeyboardHint": "Enter envía · Mayús+Enter agrega una línea"
+    "chatKeyboardHint": "Enter envía · Mayús+Enter agrega una línea",
+    "askSchoolAI": "Preguntar a la IA",
+    "chatSchoolQuestion": "Cuénteme sobre {school}. ¿Qué debo revisar antes de solicitar ingreso?",
+    "chatQuestionGrade": "Busco opciones para ingresar al grado {grade}.",
+    "chatContextGrade": "Grado de ingreso {grade}",
+    "chatContextLabel": "Contexto: {context}",
+    "chatClearContext": "Borrar",
+    "chatContextBusy": "Todavía se está respondiendo su pregunta actual. Se conservaron su borrador y contexto.",
+    "chatComparisonCount": "Comparación {n}/3",
+    "chatViewComparison": "Ver comparación",
+    "chatSchoolAdded": "Agregada",
+    "chatComparisonFull": "Comparación llena"
   }
 };
 

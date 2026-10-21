@@ -5,6 +5,7 @@ import { createChatHandler, providerOptions } from '../netlify/functions/lib/cha
 import { ChatUnavailableError } from '../netlify/functions/lib/chat-core.mjs';
 import { ChatLimitError, createChatLimiter, createLocalUsageStore } from '../netlify/functions/lib/chat-limit.mjs';
 import hostedChat from '../netlify/functions/chat.mjs';
+import { DATA_REVISION } from '../netlify/functions/lib/verified-programs.mjs';
 
 const ORIGIN = 'https://stem-pathfinder.test';
 const question = () => ({ messages: [{ role: 'user', content: 'Show medical programs for grade 9.' }], language: 'en', comparisonSchoolIds: [] });
@@ -66,7 +67,13 @@ test('bad JSON, unknown fields, invalid roles, history, questions, and IDs stop 
     { body: { messages: Array.from({ length: 9 }, () => ({ role: 'user', content: 'Hello' })) } },
     { body: { messages: Array.from({ length: 6 }, () => ({ role: 'user', content: 'x'.repeat(1100) })) } },
     { body: { ...question(), comparisonSchoolIds: ['unknown'] } },
-    { body: { ...question(), comparisonSchoolIds: Array(4).fill('19647331939040') } }
+    { body: { ...question(), comparisonSchoolIds: Array(4).fill('19647331939040') } },
+    { body: { ...question(), context: { focusedSchoolIds: ['not-a-school'] } } },
+    { body: { ...question(), context: { focusedSchoolIds: Array(4).fill('19647331939040') } } },
+    { body: { ...question(), context: { lastProgramIds: Array(7).fill('known-looking-program') } } },
+    { body: { ...question(), context: { grade: '13' } } },
+    { body: { ...question(), context: { interests: ['guaranteed-admission'] } } },
+    { body: { ...question(), context: { sourceUrl: 'https://untrusted.example' } } }
   ];
   for (const options of cases) {
     const { handler, calls } = fixture();
@@ -143,6 +150,20 @@ test('valid injected service receives trimmed input after one usage reservation'
     ['service', { messages: [{ role: 'user', content: 'Show Venice.' }], language: 'en', comparisonSchoolIds: ['19647331939040'] }]
   ]);
   assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+test('HTTP context is bounded metadata and cannot supply facts or retain stale ordered references', async () => {
+  const { handler, calls } = fixture();
+  const response = await handler(request({ body: { ...question(), context: {
+    focusedSchoolIds: ['19647331939040', '19647330000000'],
+    lastProgramIds: ['invented-program'], dataRevision: 'stale',
+    grade: '9', interests: ['medical', 'medical']
+  } } }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(calls[1][1].context, {
+    focusedSchoolIds: ['19647331939040'], lastProgramIds: [],
+    dataRevision: DATA_REVISION, grade: '9', interests: ['medical']
+  });
 });
 
 test('limit and shared-store outages prevent provider work and return sanitized JSON', async () => {

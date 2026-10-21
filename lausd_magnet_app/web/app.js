@@ -147,7 +147,8 @@ function schoolActionButtons(school) {
   return '<button class="fav-btn ' + (saved ? 'active' : '') + '" data-action="favorite" data-school-name="' + escapeHtml(school.name) +
     '" aria-pressed="' + saved + '" aria-label="' + escapeHtml(tx(saved ? 'removeSaved' : 'saveSchool', saved ? 'Remove from saved' : 'Save school')) + '">' + (saved ? '❤️' : '🤍') + '</button>' +
     '<button class="compare-btn ' + (selected ? 'active' : '') + '" data-action="compare" data-school-name="' + escapeHtml(school.name) + '" aria-pressed="' + selected + '">' +
-    escapeHtml(tx(selected ? 'removeCompare' : 'compare', selected ? 'Remove from comparison' : 'Compare')) + '</button>';
+    escapeHtml(tx(selected ? 'removeCompare' : 'compare', selected ? 'Remove from comparison' : 'Compare')) + '</button>' +
+    (getProgramEvidence(school).length ? '<button class="ask-ai-btn" data-action="ask-school" data-school-id="' + escapeHtml(SchoolUtils.schoolId(school)) + '">' + escapeHtml(tx('askSchoolAI', 'Ask AI about this school')) + '</button>' : '');
 }
 function syncSchoolButtons() {
   document.querySelectorAll('[data-action="favorite"]').forEach(button => {
@@ -163,6 +164,7 @@ function syncSchoolButtons() {
     button.setAttribute('aria-pressed', String(active));
     button.textContent = tx(active ? 'removeCompare' : 'compare', active ? 'Remove from comparison' : 'Compare');
   });
+  if (typeof syncChatComparisonUI === 'function') syncChatComparisonUI();
 }
 function toggleFavorite(name) {
   if (!allSchools.some(school => school.name === name)) return;
@@ -215,13 +217,13 @@ function addSchoolIdsToComparison(ids) {
 function comparisonHtml() {
   const schools = allSchools.filter(school => compared.has(school.name));
   return '<section class="comparison-panel" id="comparison-panel" aria-label="' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '">' +
-    '<div class="comparison-heading"><h2>' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '</h2>' +
+    '<div class="comparison-heading"><h2 id="comparison-title" tabindex="-1">' + escapeHtml(tx('compareTitle', 'Compare your shortlist')) + '</h2>' +
     '<p>' + escapeHtml(tx('compareHint', 'Choose up to three schools. Confirm the specific magnet program, grade eligibility, and transportation with LAUSD.')) + '</p></div>' +
     (schools.length ? '<div class="comparison-actions"><button data-action="print-shortlist">' + escapeHtml(tx('printShortlist', 'Print shortlist')) + '</button>' +
       '<button data-action="share-shortlist">' + escapeHtml(tx('shareShortlist', 'Share shortlist')) + '</button></div><div class="comparison-grid">' +
       schools.map(school => '<article class="comparison-card"><h3>' + escapeHtml(school.name) + '</h3><p>' + escapeHtml(gradeLabel(school)) +
         '</p><p>' + schoolLocationHtml(school, 'map-link') + '</p>' + schoolDetailsHtml(school) +
-        '<button data-action="compare" data-school-name="' + escapeHtml(school.name) + '">' + escapeHtml(tx('removeCompare', 'Remove from comparison')) + '</button></article>').join('') + '</div>' :
+        '<div class="comparison-school-actions">' + schoolActionButtons(school) + '</div></article>').join('') + '</div>' :
       '<p>' + escapeHtml(tx('compareEmpty', 'Use Compare on a school card to build your shortlist.')) + '</p>') + '</section>';
 }
 function renderSaved() {
@@ -379,6 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const action = target.dataset.action;
     if (action === 'favorite') toggleFavorite(target.dataset.schoolName);
     if (action === 'compare') toggleCompare(target.dataset.schoolName);
+    if (action === 'ask-school' && typeof openChatForSchool === 'function') openChatForSchool(target.dataset.schoolId);
     if (action === 'print-shortlist') printShortlist();
     if (action === 'share-shortlist') shareShortlist();
     if (action === 'clear-filters') clearFilters();

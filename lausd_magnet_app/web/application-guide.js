@@ -1,42 +1,49 @@
-/* Official application dates are year-specific and reviewed separately from school data. */
-const APPLICATION_CYCLE = Object.freeze({
-  schoolYear: '2027–28', opens: '2026-10-01', closes: '2026-11-06', lateOpens: '2026-12-01',
-  checkedAt: '2026-10-21', reviewBy: '2027-01-01',
-  sourceUrl: 'https://www.lausd.org/apps/pages/index.jsp?uREC_ID=4432585&type=d&pREC_ID=2724498',
-  applyUrl: 'https://apply.lausd.net'
-});
+/* Browser rendering uses the same canonical facts and pure date helpers as AI. */
+const APPLICATION_CYCLE = APPLICATION_GUIDANCE_DATA;
 function applicationStatusKey(today) {
-  if (today >= APPLICATION_CYCLE.reviewBy) return 'guideVerify';
-  if (today < APPLICATION_CYCLE.opens) return 'guideUpcoming';
-  if (today <= APPLICATION_CYCLE.closes) return 'guideOpen';
-  if (today < APPLICATION_CYCLE.lateOpens) return 'guideClosed';
-  return 'guideLate';
+  return ({ upcoming: 'guideUpcoming', on_time: 'guideOpen', between_windows: 'guideClosed', late_started: 'guideLate', needs_review: 'guideVerify' })[
+    ApplicationGuidanceUtils.statusForDate(today, APPLICATION_CYCLE)
+  ];
 }
-function applicationDatesSummaryHtml() {
-  return `${escapeHtml(t('guideEyebrow'))}: ${escapeHtml(t('guideDates'))}<br>` +
-    `<a href="${APPLICATION_CYCLE.sourceUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('guideSource'))}</a> · ${escapeHtml(t('guideChecked'))}`;
+function applicationGuideView(now = new Date()) {
+  return ApplicationGuidanceUtils.localizedView(APPLICATION_CYCLE, { language: typeof LANG !== 'undefined' && LANG === 'es' ? 'es' : 'en', now });
 }
-function renderApplicationGuide() {
+function applicationCheckedLabel(language = 'en') {
+  const date = ApplicationGuidanceUtils.formatDate(APPLICATION_CYCLE.checkedAt, language);
+  return language === 'es' ? `Fechas consultadas el ${date}.` : `Dates checked ${date}.`;
+}
+function applicationYearLabel(language = 'en') {
+  return language === 'es' ? `Año escolar ${APPLICATION_CYCLE.schoolYear}` : `${APPLICATION_CYCLE.schoolYear} school year`;
+}
+function applicationDatesSummaryHtml(now = new Date()) {
+  const language = typeof LANG !== 'undefined' && LANG === 'es' ? 'es' : 'en';
+  const view = applicationGuideView(now);
+  return `${escapeHtml(applicationYearLabel(language))}: ${escapeHtml(view.datesSummary || view.statusMessage)}<br>` +
+    `<a href="${escapeHtml(view.sources[0].url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(view.sources[0].title)}</a> · ${escapeHtml(applicationCheckedLabel(language))}`;
+}
+function renderApplicationGuide(now = new Date()) {
   const section = document.getElementById('application-guide');
   if (!section) return;
-  const today = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  let checked=[];
-  try { checked=JSON.parse(localStorage.getItem('stem_checklist_2027_28') || '[]'); } catch {}
-  if (!Array.isArray(checked)) checked=[];
-  section.innerHTML = `<div class="guide-heading"><p class="section-eyebrow">${escapeHtml(t('guideEyebrow'))}</p>
+  const language = typeof LANG !== 'undefined' && LANG === 'es' ? 'es' : 'en';
+  const view = applicationGuideView(now);
+  let checked = [];
+  try { checked = JSON.parse(localStorage.getItem(APPLICATION_CYCLE.checklistStorageKey) || '[]'); } catch {}
+  if (!Array.isArray(checked)) checked = [];
+  const source = view.sources[0];
+  section.innerHTML = `<div class="guide-heading"><p class="section-eyebrow">${escapeHtml(applicationYearLabel(language))}</p>
     <h2 id="application-guide-title">${escapeHtml(t('guideTitle'))}</h2><p>${escapeHtml(t('guideIntro'))}</p></div>
-    <div class="guide-grid"><div class="guide-dates"><p class="application-status">${escapeHtml(t(applicationStatusKey(today)))}</p>
-      <p>${escapeHtml(t('guideDates'))}</p>
-      <p class="source-note"><a href="${APPLICATION_CYCLE.sourceUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('guideSource'))}</a><br>${escapeHtml(t('guideChecked'))}</p>
-      <a class="btn-primary guide-apply" href="${APPLICATION_CYCLE.applyUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('guideApply'))}</a>
+    <div class="guide-grid"><div class="guide-dates"><p class="application-status">${escapeHtml(view.statusMessage)}</p>
+      ${view.datesSummary ? `<p>${escapeHtml(view.datesSummary)}</p>` : ''}
+      <p class="source-note"><a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a><br>${escapeHtml(applicationCheckedLabel(language))}</p>
+      <a class="btn-primary guide-apply" href="${escapeHtml(view.applyUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('guideApply'))}</a>
     </div><fieldset class="application-checklist"><legend>${escapeHtml(t('guideChecklistLabel'))}</legend>
-      ${[1,2,3,4].map(i=>`<label><input type="checkbox" data-checklist-step="${i}" ${checked.includes(i)?'checked':''}><span>${escapeHtml(t('guideCheck'+i))}</span></label>`).join('')}
+      ${APPLICATION_CYCLE.checklist.map(item => `<label><input type="checkbox" data-checklist-step="${item.id}" ${checked.includes(item.id) ? 'checked' : ''}><span>${escapeHtml(language === 'es' ? item.textEs : item.text)}</span></label>`).join('')}
       <p class="source-note">${escapeHtml(t('guideLocal'))}</p></fieldset></div>`;
-  section.querySelectorAll('[data-checklist-step]').forEach(input=>input.addEventListener('change',()=>{
-    const selected=[...section.querySelectorAll('[data-checklist-step]:checked')].map(el=>Number(el.dataset.checklistStep));
-    try { localStorage.setItem('stem_checklist_2027_28',JSON.stringify(selected)); } catch {}
+  section.querySelectorAll('[data-checklist-step]').forEach(input => input.addEventListener('change', () => {
+    const selected = [...section.querySelectorAll('[data-checklist-step]:checked')].map(element => Number(element.dataset.checklistStep));
+    try { localStorage.setItem(APPLICATION_CYCLE.checklistStorageKey, JSON.stringify(selected)); } catch {}
   }));
 }
 function scrollToApplicationGuide() {
-  document.getElementById('application-guide')?.scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('application-guide')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
