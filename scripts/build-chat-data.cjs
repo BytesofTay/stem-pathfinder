@@ -12,7 +12,8 @@ const { createHash } = require('node:crypto');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const INPUT_PATHS = Object.freeze({
   campuses: 'lausd_magnet_app/web/schools_data.js',
-  programs: 'lausd_magnet_app/web/program_evidence.js'
+  programs: 'lausd_magnet_app/web/program_evidence.js',
+  application: 'lausd_magnet_app/web/application-data.js'
 });
 const OUTPUT_PATH = 'netlify/functions/lib/verified-programs.mjs';
 const SUPPORTED_INTERESTS = Object.freeze(['science', 'tech', 'medical', 'engineer', 'arts']);
@@ -79,13 +80,55 @@ function readCatalogSources(rootDir = ROOT_DIR) {
   }
   // JSON copies avoid retaining cross-realm objects in validation and output.
   const data = JSON.parse(vm.runInContext(
-    'JSON.stringify({schools:SCHOOLS_DATA,metadata:SCHOOL_DATA_SOURCE,evidence:PROGRAM_EVIDENCE})',
+    'JSON.stringify({schools:SCHOOLS_DATA,metadata:SCHOOL_DATA_SOURCE,evidence:PROGRAM_EVIDENCE,application:APPLICATION_GUIDANCE_DATA})',
     context, { timeout: 1000 }
   ));
   return { ...data, inputHashes };
 }
 
-function buildCatalog({ schools, metadata, evidence, inputHashes }) {
+function validateApplicationGuidance(application) {
+  requireValue(application && typeof application === 'object', 'Canonical application guidance is required');
+  requireValue(application.schemaVersion === 1, 'Unsupported application guidance schema');
+  requireValue(/^choices-\d{4}-\d{2}$/u.test(application.cycleId || ''), 'Invalid application cycleId');
+  requireValue(/^\d{4}–\d{2}$/u.test(application.schoolYear || ''), 'Application schoolYear must identify one cycle');
+  requireValue(application.cycleId === `choices-${application.schoolYear.replace('–', '-')}`, 'Application cycle/year mismatch');
+  requireValue(application.sourceId === `application:choices:${application.schoolYear.replace('–', '-')}`, 'Application source ID must match its cycle');
+  requireValue(application.applySourceId === `application:portal:${application.cycleId}`, 'Application portal source ID must match its cycle');
+  requireValue(application.timeZone === 'America/Los_Angeles', 'Application calendar must use Los Angeles dates');
+  requireValue(application.dateGranularity === 'calendar_day' && application.deadlineTime === null && application.lateCloses === null,
+    'Only reviewed application calendar dates may be published; unknown times/late closing dates must remain null');
+  for (const field of ['opens', 'closes', 'lateOpens', 'checkedAt', 'reviewBy']) validDate(application[field], `application ${field}`);
+  requireValue(application.opens <= application.closes && application.closes < application.lateOpens, 'Application date sequence is invalid');
+  requireValue(application.checkedAt < application.reviewBy, 'Application review deadline must follow its checked date');
+  officialProgramUrl(application.sourceUrl, 'application sourceUrl');
+  safeUrl(application.applyUrl, 'application applyUrl', url => url.hostname === 'apply.lausd.net');
+  for (const field of ['sourceTitle', 'sourceTitleEs', 'applySourceTitle', 'applySourceTitleEs']) safeText(application[field], `application ${field}`);
+  requireValue(application.checklistStorageKey === `stem_checklist_${application.schoolYear.replace('–', '_')}`, 'Application checklist storage key must match the cycle');
+  for (const field of ['checklist', 'eligibility', 'limitations']) {
+    const items = application[field];
+    requireValue(Array.isArray(items) && items.length > 0 && items.length <= 8, `Application ${field} must be a bounded list`);
+    const keys = new Set();
+    const numericIds = new Set();
+    for (const item of items) {
+      requireValue(item && /^[a-z][a-z0-9_]{1,60}$/u.test(item.key || '') && !keys.has(item.key), `Application ${field} needs unique stable keys`);
+      keys.add(item.key);
+      safeText(item.text, `application ${field} text`);
+      safeText(item.textEs, `application ${field} Spanish text`);
+      if (field === 'checklist') {
+        requireValue(Number.isSafeInteger(item.id) && item.id > 0 && !numericIds.has(item.id), 'Application checklist needs unique positive IDs');
+        numericIds.add(item.id);
+      }
+    }
+  }
+  // Select the published schema so unexpected input fields never reach tools.
+  const result = Object.fromEntries(['schemaVersion', 'cycleId', 'schoolYear', 'timeZone', 'dateGranularity', 'opens', 'closes', 'lateOpens', 'deadlineTime', 'lateCloses', 'checkedAt', 'reviewBy', 'sourceId', 'sourceUrl', 'sourceTitle', 'sourceTitleEs', 'applyUrl', 'applySourceId', 'applySourceTitle', 'applySourceTitleEs', 'checklistStorageKey'].map(field => [field, application[field]]));
+  for (const field of ['checklist', 'eligibility', 'limitations']) result[field] = application[field].map(item => ({
+    ...(field === 'checklist' ? { id: item.id } : {}), key: item.key, text: item.text, textEs: item.textEs
+  }));
+  return result;
+}
+
+function buildCatalog({ schools, metadata, evidence, application, inputHashes }) {
   requireValue(Array.isArray(schools) && schools.length > 0, 'Campus directory must be a nonempty array');
   requireValue(Array.isArray(evidence) && evidence.length > 0, 'Reviewed program evidence must be a nonempty array');
   requireValue(metadata && typeof metadata === 'object', 'Campus source metadata is required');
@@ -189,11 +232,13 @@ function buildCatalog({ schools, metadata, evidence, inputHashes }) {
     gradeNoteEs: GRADE_NOTE_ES,
     sourceInputHashes
   };
-  const dataRevision = `sha256:${sha256(JSON.stringify({ sourceInfo, programs }))}`;
-  return { programs, sourceInfo, dataRevision };
+  const applicationGuidance = validateApplicationGuidance(application);
+  sourceInfo.applicationGuidance = { cycleId: applicationGuidance.cycleId, checkedAt: applicationGuidance.checkedAt, reviewBy: applicationGuidance.reviewBy, sourceUrl: applicationGuidance.sourceUrl };
+  const dataRevision = `sha256:${sha256(JSON.stringify({ sourceInfo, programs, applicationGuidance }))}`;
+  return { programs, sourceInfo, applicationGuidance, dataRevision };
 }
 
-function renderModule({ programs, sourceInfo, dataRevision }) {
+function renderModule({ programs, sourceInfo, applicationGuidance, dataRevision }) {
   const json = value => JSON.stringify(value, null, 2).replace(/\u2028/gu, '\\u2028').replace(/\u2029/gu, '\\u2029');
   return `// Generated by scripts/build-chat-data.cjs from trusted repository data.\n` +
     `// Do not edit this file. Regenerate: node scripts/build-chat-data.cjs\n` +
@@ -208,7 +253,8 @@ function renderModule({ programs, sourceInfo, dataRevision }) {
     `}\n\n` +
     `export const DATA_REVISION = ${json(dataRevision)};\n\n` +
     `export const SOURCE_INFO = deepFreeze(${json(sourceInfo)});\n\n` +
-    `export const VERIFIED_PROGRAMS = deepFreeze(${json(programs)});\n`;
+    `export const VERIFIED_PROGRAMS = deepFreeze(${json(programs)});\n\n` +
+    `export const APPLICATION_GUIDANCE = deepFreeze(${json(applicationGuidance)});\n`;
 }
 
 function generateCatalog({ rootDir = ROOT_DIR, check = false } = {}) {
@@ -242,4 +288,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { INPUT_PATHS, OUTPUT_PATH, SUPPORTED_INTERESTS, readCatalogSources, buildCatalog, renderModule, generateCatalog };
+module.exports = { INPUT_PATHS, OUTPUT_PATH, SUPPORTED_INTERESTS, readCatalogSources, buildCatalog, renderModule, generateCatalog, validateApplicationGuidance };

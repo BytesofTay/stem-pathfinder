@@ -13,6 +13,8 @@ A bilingual school exploration prototype from **The STEM in Me**. Families choos
 - Follow the sourced 2027–28 application dates and a browser-local preparation checklist. Marks do not establish submission to LAUSD.
 - View campus locations on a map. Known off-campus programs do not link to misleading campus directions.
 - Ask the hosted AI helper about reviewed programs in English or Spanish, open its official citations, and add schools to the three-school comparison.
+- Open a school-specific AI question from a reviewed school card, continue with references such as “the first one,” and jump straight to comparison from chat.
+- Ask about the published application calendar and preparation checklist; chat and the application guide use the same dated source data.
 
 Interest matching uses the reviewed program metadata, never numerical school ratings or school-name keyword guesses. Campus grades do not establish the specific program’s entry grades, eligibility, current seats, or admission outcome. See [DATA_PROVENANCE.md](DATA_PROVENANCE.md) and [program evidence](docs/PROGRAM_EVIDENCE.md).
 
@@ -36,6 +38,7 @@ The frontend is buildless HTML/CSS/JavaScript in `lausd_magnet_app/web/`. Local 
 | `web/program_evidence.js` | Human-reviewed official program facts and Spanish translations |
 | `web/schools_data.js` | Dated CDE campus snapshot with CDS IDs and actual grades |
 | `web/application-guide.js` | Year-specific official dates and local preparation checklist |
+| `web/application-data.js` | Shared reviewed application cycle and bilingual preparation guidance |
 | `web/i18n.js`, `web/chat.js` | Bilingual copy and hosted AI chat client |
 | `netlify/functions/chat.mjs`, `netlify/functions/lib/chat-*.mjs` | Hosted AI, reviewed-catalog tools, HTTP bounds, and shared usage limits |
 | `scripts/build-chat-data.cjs` | Validated server catalog generation and freshness check |

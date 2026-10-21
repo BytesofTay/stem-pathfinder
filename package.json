@@ -8,7 +8,7 @@
     "test:chat": "node --test tests/chat-*.test.*",
     "test:api": "node --test tests/server.test.cjs tests/chat-server.test.mjs",
     "test:e2e": "playwright test",
-    "test:unit": "node --test tests/matching.test.cjs tests/application-guide.test.cjs tests/evidence.test.cjs tests/chat-catalog.test.cjs tests/chat-core.test.mjs tests/chat-http.test.mjs"
+    "test:unit": "node --test tests/matching.test.cjs tests/application-guide.test.cjs tests/application-guidance.test.mjs tests/evidence.test.cjs tests/chat-catalog.test.cjs tests/chat-core.test.mjs tests/chat-http.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.99",

@@ -11,7 +11,7 @@ function deepFreeze(value) {
   return value;
 }
 
-export const DATA_REVISION = "sha256:a1f9d882e9a6b9f4bb5cf59d4273a8b22ad80a3055263c385236feec601d4f20";
+export const DATA_REVISION = "sha256:a16603501f62bd04f92a95df38c8b4a5dea522c78f19032800df785269a8dcc4";
 
 export const SOURCE_INFO = deepFreeze({
   "schemaVersion": 1,
@@ -38,7 +38,14 @@ export const SOURCE_INFO = deepFreeze({
   "gradeNoteEs": "Este es el rango de grados del campus. Confirme con la escuela los grados de ingreso y las plazas disponibles del programa.",
   "sourceInputHashes": {
     "lausd_magnet_app/web/schools_data.js": "9a4518cc65aa5e88a2ff154894628fdaea2d4fce4e56d0d4ea979f750ac4dead",
-    "lausd_magnet_app/web/program_evidence.js": "35cca8a35e71bd499e4d440c90a876b859706fca834d7e4758827f17a0f16881"
+    "lausd_magnet_app/web/program_evidence.js": "35cca8a35e71bd499e4d440c90a876b859706fca834d7e4758827f17a0f16881",
+    "lausd_magnet_app/web/application-data.js": "2da6a2222413af9a7f9282ab3888224f3fd8c47a7174ddcd1fa502d2c7c3be07"
+  },
+  "applicationGuidance": {
+    "cycleId": "choices-2027-28",
+    "checkedAt": "2026-10-21",
+    "reviewBy": "2027-01-01",
+    "sourceUrl": "https://www.lausd.org/apps/pages/index.jsp?uREC_ID=4432585&type=d&pREC_ID=2724498"
   }
 });
 
@@ -266,3 +273,82 @@ export const VERIFIED_PROGRAMS = deepFreeze([
     "eligibilitySourceUrl": "https://wrightms.lausd.org/apps/pages/index.jsp?uREC_ID=4184457&type=d&pREC_ID=2504113"
   }
 ]);
+
+export const APPLICATION_GUIDANCE = deepFreeze({
+  "schemaVersion": 1,
+  "cycleId": "choices-2027-28",
+  "schoolYear": "2027–28",
+  "timeZone": "America/Los_Angeles",
+  "dateGranularity": "calendar_day",
+  "opens": "2026-10-01",
+  "closes": "2026-11-06",
+  "lateOpens": "2026-12-01",
+  "deadlineTime": null,
+  "lateCloses": null,
+  "checkedAt": "2026-10-21",
+  "reviewBy": "2027-01-01",
+  "sourceId": "application:choices:2027-28",
+  "sourceUrl": "https://www.lausd.org/apps/pages/index.jsp?uREC_ID=4432585&type=d&pREC_ID=2724498",
+  "sourceTitle": "LAUSD enrollment calendar",
+  "sourceTitleEs": "Calendario de inscripción de LAUSD",
+  "applyUrl": "https://apply.lausd.net",
+  "applySourceId": "application:portal:choices-2027-28",
+  "applySourceTitle": "Official LAUSD application portal",
+  "applySourceTitleEs": "Portal oficial de solicitudes de LAUSD",
+  "checklistStorageKey": "stem_checklist_2027_28",
+  "checklist": [
+    {
+      "id": 1,
+      "key": "program_requirements",
+      "text": "Confirm the program’s entry grade and admission requirements.",
+      "textEs": "Confirmar el grado de ingreso y los requisitos del programa."
+    },
+    {
+      "id": 2,
+      "key": "school_questions",
+      "text": "Ask the school about the program, a visit, and transportation.",
+      "textEs": "Preguntar a la escuela sobre el programa, las visitas y el transporte."
+    },
+    {
+      "id": 3,
+      "key": "official_application",
+      "text": "Complete and submit the application in LAUSD’s official portal.",
+      "textEs": "Completar y enviar la solicitud en el portal oficial de LAUSD."
+    },
+    {
+      "id": 4,
+      "key": "confirmation",
+      "text": "Save LAUSD’s confirmation and check portal messages for next steps.",
+      "textEs": "Guardar la confirmación de LAUSD y revisar los mensajes del portal."
+    }
+  ],
+  "eligibility": [
+    {
+      "key": "confirm_program",
+      "text": "Confirm each program’s entry grade and any admission or assessment requirements with the school.",
+      "textEs": "Confirme con la escuela el grado de ingreso y cualquier requisito de admisión o evaluación de cada programa."
+    },
+    {
+      "key": "calendar_scope",
+      "text": "The application calendar does not establish a student’s eligibility, available seats, or admission.",
+      "textEs": "El calendario de solicitudes no determina la elegibilidad del estudiante, las plazas disponibles ni la admisión."
+    }
+  ],
+  "limitations": [
+    {
+      "key": "published_dates",
+      "text": "These are published calendar dates, not a live check of the portal or seat availability.",
+      "textEs": "Estas son fechas publicadas en el calendario, no una consulta en vivo del portal ni de las plazas disponibles."
+    },
+    {
+      "key": "deadline_time",
+      "text": "The reviewed calendar does not specify a deadline time or a closing date for late applications. Confirm these details with LAUSD.",
+      "textEs": "El calendario consultado no especifica la hora límite ni una fecha de cierre para las solicitudes tardías. Confirme esos detalles con LAUSD."
+    },
+    {
+      "key": "no_submission",
+      "text": "Checklist marks and this chat do not submit an application or confirm admission.",
+      "textEs": "Las marcas de la lista y este chat no envían una solicitud ni confirman la admisión."
+    }
+  ]
+});

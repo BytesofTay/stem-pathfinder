@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MockLanguageModelV4 } from 'ai/test';
 import { APICallError } from 'ai';
-import { createChatService as createService, createChatTools, parseChatInput, ChatInputError, ChatUnavailableError, CHAT_LIMITS } from '../netlify/functions/lib/chat-core.mjs';
+import { createChatService as createService, createChatTools, parseChatInput, canonicalizeChatContext, ChatInputError, ChatUnavailableError, CHAT_LIMITS } from '../netlify/functions/lib/chat-core.mjs';
 import { VERIFIED_PROGRAMS, DATA_REVISION } from '../netlify/functions/lib/verified-programs.mjs';
 
 const createChatService = options => createService({ diagnosticLogger: () => {}, ...options });
@@ -16,7 +16,7 @@ const usage = { inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cac
 const completion = (content, reason = 'stop') => ({ content, finishReason: { unified: reason, raw: undefined }, usage, warnings: [] });
 const call = (name, input, id = 'call-1') => completion([{ type: 'tool-call', toolCallId: id, toolName: name, input: JSON.stringify(input) }], 'tool-calls');
 const searchCall = query => call('searchVerifiedPrograms', { grade: '9', interests: [], query });
-const final = (answer, citationIds, extra = {}) => completion([{ type: 'text', text: JSON.stringify({ answer, citationIds, ...extra }) }]);
+const final = (answer, citationIds, extra = {}) => completion([{ type: 'text', text: JSON.stringify({ kind: 'answer', answer, citationIds, ...extra }) }]);
 const sdkModel = steps => new MockLanguageModelV4({ doGenerate: steps });
 const unavailable = error => error instanceof ChatUnavailableError && error.code === 'UPSTREAM_ERROR' && error.status === 502 && !/secret|account|token/i.test(error.message);
 
@@ -69,7 +69,7 @@ test('comparison deduplicates additive requests and counts existing unreviewed s
   assert.deepEqual((await tools.addToComparison({ schoolIds: [venice.schoolId, venice.schoolId] })).proposedSchoolIds, [venice.schoolId]);
   assert.deepEqual((await tools.addToComparison({ schoolIds: [venice.schoolId] })).proposedSchoolIds, []);
   assert.equal(tools.proposed.size, 1);
-  const full = createChatTools({ latestUserMessage: 'Compare Venice.', comparisonSchoolIds: [academy.schoolId, zoo.schoolId, '19647330000000'] });
+  const full = createChatTools({ latestUserMessage: 'Add Venice to comparison.', comparisonSchoolIds: [academy.schoolId, zoo.schoolId, '19647330000000'] });
   await full.getProgramDetails({ ids: [venice.schoolId] });
   assert.match((await full.addToComparison({ schoolIds: [venice.schoolId] })).error, /at most three/);
   assert.equal(full.proposed.size, 0);
@@ -115,7 +115,8 @@ test('actual SDK loop retrieves then produces canonical citations and mandatory 
   assert.match(result.answer, /mandatory assessment/i);
   assert.match(result.answer, /campus grade range/i);
   assert.deepEqual(result.actions, []);
-  assert.equal(model.doGenerateCalls[0].toolChoice.toolName, 'searchVerifiedPrograms');
+  assert.equal(model.doGenerateCalls[0].toolChoice.type, 'required');
+  assert.deepEqual(model.doGenerateCalls[0].tools.map(entry => entry.name).sort(), ['getApplicationGuidance', 'searchVerifiedPrograms']);
 });
 
 test('known off-campus location caveats survive a short Spanish model answer', async () => {
@@ -187,7 +188,7 @@ test('OpenAI-compatible mocked transport uses Netlify base URL, chat completions
     const request = JSON.parse(options.body);
     requests.push({ url: String(url), body: request });
     const message = requests.length === 1 ? { role: 'assistant', content: null, tool_calls: [{ id: 'http-tool-1', type: 'function', function: { name: 'searchVerifiedPrograms', arguments: JSON.stringify({ grade: '9', interests: [], query: 'Venice' }) } }] }
-      : { role: 'assistant', content: JSON.stringify({ answer: 'Venice publishes engineering and biomedical pathways.', citationIds: [citation(venice)] }) };
+      : { role: 'assistant', content: JSON.stringify({ kind: 'answer', answer: 'Venice publishes engineering and biomedical pathways.', citationIds: [citation(venice)] }) };
     return new Response(JSON.stringify({ id: 'chatcmpl-cpu-test', object: 'chat.completion', created: 1760000000, model: 'gpt-5.4-mini', choices: [{ index: 0, message, finish_reason: requests.length === 1 ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   };
   const result = await createChatService({ apiKey: 'not-a-real-key', baseURL: 'https://gateway.example/v1', fetch: mockFetch })(body());
@@ -214,7 +215,7 @@ test('an unauthorized model action cannot produce an added confirmation', async 
   const model = sdkModel([searchCall('Venice'), call('addToComparison', { schoolIds: [venice.schoolId] }, 'call-2'), final('I added Venice.', [citation(venice)])]);
   const result = await createChatService({ model })(body('Tell me about Venice.'));
   assert.deepEqual(result.actions, []);
-  assert.match(result.answer, /There are no new schools to add to comparison/);
+  assert.match(result.answer, /Your comparison has not changed/);
   assert.doesNotMatch(result.answer, /I added/);
 });
 
@@ -250,7 +251,7 @@ test('safe diagnostics identify citation failures with enums and numeric tool me
   assert.equal(events[0].event, 'chat_failure');
   assert.equal(events[0].reason, 'CITATION_REQUIRED');
   assert.equal(events[0].phase, 'validation');
-  assert.deepEqual(events[0].toolCalls, { search: 1, details: 0, comparison: 0 });
+  assert.deepEqual(events[0].toolCalls, { search: 1, details: 0, application: 0, comparison: 0 });
   assert.equal(events[0].retrievedProgramCount, 1);
   assert.equal(events[0].proposedSchoolCount, 0);
   assert.equal(events[0].stepsStarted, 2);
@@ -293,7 +294,7 @@ test('a full comparison returns a canonical no-change result even if the model g
   const result = await createChatService({ model })(body('Add Bravo to my comparison.', { comparisonSchoolIds: [venice.schoolId, academy.schoolId, zoo.schoolId] }));
   assert.deepEqual(result.actions, []);
   assert.deepEqual(result.citations, []);
-  assert.match(result.answer, /remove one before adding another/);
+  assert.match(result.answer, /Remove one before adding another/);
 });
 
 test('four-step hosted transport retains tool definitions when the final step forces tool_choice none', async () => {
@@ -310,7 +311,7 @@ test('four-step hosted transport retains tool definitions when the final step fo
       ['addToComparison', { schoolIds: [bravo.schoolId] }],
     ];
     const message = step <= 3 ? { role: 'assistant', content: null, tool_calls: [{ id: `http-action-${step}`, type: 'function', function: { name: toolSteps[step - 1][0], arguments: JSON.stringify(toolSteps[step - 1][1]) } }] }
-      : { role: 'assistant', content: JSON.stringify({ answer: 'Ready to compare.', citationIds: [] }) };
+      : { role: 'assistant', content: JSON.stringify({ kind: 'answer', answer: 'Ready to compare.', citationIds: [] }) };
     return new Response(JSON.stringify({ id: `chatcmpl-four-step-${step}`, object: 'chat.completion', created: 1760000000, model: 'gpt-5.4-mini', choices: [{ index: 0, message, finish_reason: step <= 3 ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   };
   assert.equal(providerReply({ tool_choice: 'none' }, 4).status, 400);
@@ -324,7 +325,7 @@ test('four-step hosted transport retains tool definitions when the final step fo
   assert(requests.every(request => request.url === 'https://gateway.example/v1/chat/completions'));
   const finalRequest = requests[3].body;
   assert.equal(finalRequest.tool_choice, 'none');
-  assert.deepEqual(finalRequest.tools.map(entry => entry.function.name).sort(), ['addToComparison', 'getProgramDetails', 'searchVerifiedPrograms']);
+  assert.deepEqual(finalRequest.tools.map(entry => entry.function.name).sort(), ['addToComparison', 'getApplicationGuidance', 'getProgramDetails', 'searchVerifiedPrograms']);
   assert(finalRequest.tools.every(entry => entry.function.strict === true));
   assert.equal(finalRequest.response_format.type, 'json_schema');
   assert.equal(finalRequest.response_format.json_schema.strict, true);
@@ -333,4 +334,186 @@ test('four-step hosted transport retains tool definitions when the final step fo
   assert.deepEqual(result.citations.map(source => source.url), [bravo.sourceUrl]);
   assert.deepEqual(result.programs.map(program => program.schoolId), [bravo.schoolId]);
   assert.match(result.answer, /Schools ready to compare/);
+});
+
+const appCall = (topic = 'all', id = 'app-call-1') => call('getApplicationGuidance', { topic }, id);
+const currentContext = (programs = [venice, bravo], extra = {}) => ({ focusedSchoolIds: [], lastProgramIds: programs.map(program => program.programId), dataRevision: DATA_REVISION, grade: '9', interests: ['medical'], ...extra });
+
+test('context keeps current display order, filters unreviewed focus, and discards stale or partially unknown ordering', () => {
+  const context = canonicalizeChatContext(currentContext([venice, bravo], { focusedSchoolIds: ['19647330000000', bravo.schoolId], interests: ['medical', 'medical'] }));
+  assert.deepEqual(context.lastProgramIds, [venice.programId, bravo.programId]);
+  assert.deepEqual(context.focusedSchoolIds, [bravo.schoolId]);
+  assert.deepEqual(context.interests, ['medical']);
+  assert.deepEqual(canonicalizeChatContext(currentContext([venice], { dataRevision: 'old-revision' })).lastProgramIds, []);
+  assert.deepEqual(canonicalizeChatContext(currentContext([], { lastProgramIds: ['unknown-program', venice.programId] })).lastProgramIds, []);
+  for (const context of [{ ...currentContext(), inventedFacts: 'override' }, { ...currentContext(), grade: '13' }, { ...currentContext(), lastProgramIds: Array(7).fill(venice.programId) }, { ...currentContext(), focusedSchoolIds: Array(4).fill(venice.schoolId) }]) assert.throws(() => parseChatInput(body('Hello.', { context })), ChatInputError);
+  assert.equal(Object.hasOwn(parseChatInput(body()), 'context'), false, 'legacy requests preserve their parsed shape');
+});
+
+test('negation variants and informational comparisons never authorize browser additions', async () => {
+  for (const latestUserMessage of ['Never add Venice.', 'Never save Venice.', 'I would rather not add Venice.', 'Evite agregar Venice.', 'No agregue Venice.', 'No añada Venice.', 'Nunca agregues Venice.', 'Compare Venice and Science Academy.', 'Can you compare their programs?', 'How do I add Venice?', 'Explícame cómo agregar Venice.']) {
+    const tools = createChatTools({ latestUserMessage });
+    await tools.getProgramDetails({ ids: [venice.schoolId] });
+    assert.match((await tools.addToComparison({ schoolIds: [venice.schoolId] })).error, /explicitly request/, latestUserMessage);
+    assert.equal(tools.proposed.size, 0);
+  }
+});
+
+test('ordinal additions use canonical displayed order rather than retrieval order in English and Spanish', async () => {
+  for (const [latestUserMessage, expected, rejected] of [['Add the first one.', venice, bravo], ['Agrega el segundo a mi comparación.', bravo, venice], ['Add the last program.', bravo, venice]]) {
+    const tools = createChatTools({ latestUserMessage, context: currentContext([venice, bravo]) });
+    await tools.getProgramDetails({ ids: [bravo.schoolId, venice.schoolId] });
+    assert.match((await tools.addToComparison({ schoolIds: [rejected.schoolId] })).error, /does not match/, latestUserMessage);
+    assert.equal(tools.proposed.size, 0);
+    assert.deepEqual((await tools.addToComparison({ schoolIds: [expected.schoolId] })).proposedSchoolIds, [expected.schoolId]);
+  }
+});
+
+test('missing, out-of-range and stale ordinal references never guess another school', async () => {
+  for (const [latestUserMessage, context] of [['Add the first one.', undefined], ['Agrega el tercero.', currentContext([venice])], ['Add the first one.', currentContext([venice], { dataRevision: 'stale' })]]) {
+    const tools = createChatTools({ latestUserMessage, context });
+    await tools.getProgramDetails({ ids: [bravo.schoolId] });
+    assert.match((await tools.addToComparison({ schoolIds: [bravo.schoolId] })).error, /missing or out of date/);
+    assert.equal(tools.proposed.size, 0);
+  }
+});
+
+test('grade ordinals do not become program-order references', async () => {
+  for (const latestUserMessage of ['Add Bravo for first grade.', 'Add Bravo for 1st grade.', 'Agrega Bravo para primer grado.']) {
+    const tools = createChatTools({ latestUserMessage });
+    await tools.getProgramDetails({ ids: [bravo.schoolId] });
+    assert.deepEqual((await tools.addToComparison({ schoolIds: [bravo.schoolId] })).proposedSchoolIds, [bravo.schoolId], latestUserMessage);
+  }
+  const focused = createChatTools({ latestUserMessage: 'Add this school for 1st grade.', context: currentContext([], { focusedSchoolIds: [bravo.schoolId] }) });
+  await focused.getProgramDetails({ ids: [bravo.schoolId] });
+  assert.deepEqual((await focused.addToComparison({ schoolIds: [bravo.schoolId] })).proposedSchoolIds, [bravo.schoolId]);
+});
+
+test('valid generic clarification is canonical and discards all model prose, citations and unrelated cards', async () => {
+  const model = sdkModel([call('searchVerifiedPrograms', { grade: null, interests: [], query: null }), final('Applications close on an invented date. https://evil.example', ['forged'], { kind: 'clarification' })]);
+  const result = await createChatService({ model })(body('Help me get started.'));
+  assert.equal(result.answerKind, 'clarification');
+  assert.match(result.answer, /^What grade will your child enter/);
+  assert.doesNotMatch(JSON.stringify(result), /invented|evil\.example|forged/);
+  assert.deepEqual(result.programs, []);
+  assert.deepEqual(result.citations, []);
+  assert.deepEqual(result.actions, []);
+});
+
+test('clarification targets are bounded canonical questions and missing ordinal context takes precedence', async () => {
+  const spanish = sdkModel([searchCall(null), final('interests', [], { kind: 'clarification' })]);
+  const result = await createChatService({ model: spanish })(body('Hola.', { language: 'es', context: currentContext([], { interests: [] }) }));
+  assert.match(result.answer, /^¿Qué temas le interesan/);
+  const unknown = sdkModel([searchCall('Venice'), final('grade', [], { kind: 'clarification' })]);
+  const clarified = await createChatService({ model: unknown })(body('Add the first one.', { context: currentContext([], { dataRevision: 'stale' }) }));
+  assert.match(clarified.answer, /^Which program do you mean/);
+  const noKnowledge = sdkModel([final('grade', [], { kind: 'clarification' })]);
+  await assert.rejects(createChatService({ model: noKnowledge })(body()), error => error.reason === 'KNOWLEDGE_NOT_RETRIEVED');
+});
+
+test('a follow-up add-first request retrieves the canonical program and returns only that action', async () => {
+  const model = sdkModel([searchCall('Venice'), call('getProgramDetails', { ids: [venice.programId] }, 'details'), call('addToComparison', { schoolIds: [venice.schoolId] }, 'addition'), final('Ready.', [])]);
+  const result = await createChatService({ model })(body('Add the first one.', { context: currentContext([venice, bravo]) }));
+  assert.equal(result.answerKind, 'action');
+  assert.deepEqual(result.actions, [{ type: 'add_to_comparison', schoolIds: [venice.schoolId] }]);
+  assert.deepEqual(result.programs.map(program => program.programId), [venice.programId]);
+  const instructions = JSON.stringify(model.doGenerateCalls[0].prompt);
+  assert(instructions.indexOf(venice.programId) < instructions.indexOf(bravo.programId));
+});
+
+test('already-selected and unauthorized action responses do not masquerade as capacity failures', async () => {
+  const already = sdkModel([searchCall('Venice'), call('addToComparison', { schoolIds: [venice.schoolId] }, 'addition'), final('Ignored.', [])]);
+  const response = await createChatService({ model: already })(body('Add Venice.', { comparisonSchoolIds: [venice.schoolId] }));
+  assert.match(response.answer, /already in your comparison/);
+  assert.doesNotMatch(response.answer, /three schools|Remove one/);
+  const refused = sdkModel([searchCall('Venice'), call('addToComparison', { schoolIds: [venice.schoolId] }, 'addition'), final('Ignored.', [])]);
+  const negated = await createChatService({ model: refused })(body('Never add Venice.'));
+  assert.match(negated.answer, /comparison has not changed/);
+  assert.doesNotMatch(negated.answer, /three schools|Remove one/);
+  assert.deepEqual(negated.actions, []);
+});
+
+test('canonical caveats are not appended twice when their exact text is already present', async () => {
+  const model = sdkModel([searchCall('Science Academy'), final(academy.eligibilityNote, [citation(academy)])]);
+  const result = await createChatService({ model })(body());
+  assert.equal(result.answer.split(academy.eligibilityNote).length - 1, 1);
+  assert.match(result.answer, /campus grade range/);
+});
+
+test('application-only answers use dated canonical guidance without unrelated program cards or model dates', async () => {
+  const model = sdkModel([appCall('dates'), final('Wrong model date: November 30, 2099. https://evil.example', ['forged'])]);
+  const result = await createChatService({ model, now: () => new Date('2026-10-21T20:00:00Z') })(body('How do I apply for 2027–28?'));
+  assert.equal(result.answerKind, 'answer');
+  assert.match(result.answer, /2027–28/);
+  assert.match(result.answer, /November 6, 2026/);
+  assert.doesNotMatch(JSON.stringify(result), /2099|evil\.example|forged/);
+  assert(result.citations.some(source => source.id === 'application:choices:2027-28'));
+  assert.deepEqual(result.programs, []);
+  assert.deepEqual(result.actions, []);
+  assert.equal(model.doGenerateCalls.length, 2);
+});
+
+test('stale and unsupported-year application requests suppress old window dates even if history/model repeats them', async () => {
+  for (const [content, date] of [['What are the application dates?', '2027-02-01T20:00:00Z'], ['What are the dates for 2028–29?', '2026-10-21T20:00:00Z']]) {
+    const model = sdkModel([appCall('dates'), final('Applications are open October 1 through November 6, 2026.', [])]);
+    const result = await createChatService({ model, now: () => new Date(date) })(body(content));
+    assert.doesNotMatch(result.answer, /October 1|November 6|December 1/);
+    assert.match(result.answer, /review|verified|Confirm/i);
+    assert.deepEqual(result.programs, []);
+    assert(result.citations.length > 0);
+  }
+});
+
+test('mixed program/application replies preserve canonical sources but discard all model-written dates', async () => {
+  const model = sdkModel([searchCall('Venice'), appCall('dates', 'application'), final('Venice guarantees seats and accepts applications until 2099.', [citation(venice), 'application:choices:2027-28'])]);
+  const result = await createChatService({ model, now: () => new Date('2026-10-21T20:00:00Z') })(body('Tell me about Venice and how to apply.'));
+  assert.match(result.answer, /Venice High School STEMM Magnet/);
+  assert.doesNotMatch(result.answer, /2099|guarantees seats/);
+  assert(result.citations.some(source => source.id === citation(venice)));
+  assert(result.citations.some(source => source.id === 'application:choices:2027-28'));
+  assert.deepEqual(result.programs.map(program => program.schoolId), [venice.schoolId]);
+});
+
+test('a named school question needs no grade or interest preference', async () => {
+  const model = sdkModel([searchCall('Francisco Bravo'), final('Bravo publishes a medical program with health-science partners.', [citation(bravo)])]);
+  const result = await createChatService({ model })(body('Tell me about Francisco Bravo Medical Magnet High.'));
+  assert.equal(result.answerKind, 'answer');
+  assert.deepEqual(result.programs.map(program => program.schoolId), [bravo.schoolId]);
+  assert.doesNotMatch(result.answer, /What grade|Which subjects/);
+});
+
+test('canonical application information takes precedence over unnecessary model clarification', async () => {
+  const model = sdkModel([appCall('checklist'), final('grade', [], { kind: 'clarification' })]);
+  const result = await createChatService({ model, now: () => new Date('2026-10-21T20:00:00Z') })(body('How do I apply?'));
+  assert.equal(result.answerKind, 'answer');
+  assert.match(result.answer, /STEM Pathfinder preparation checklist/);
+  assert.doesNotMatch(result.answer, /What grade will/);
+  assert.deepEqual(result.programs, []);
+  assert(result.citations.length > 0);
+});
+
+test('ambiguous bare-year application questions ask for the full cycle without returning current dates', async () => {
+  for (const content of ['2028 application deadline?', 'What is the deadline in 2028?', '¿Cuál es la fecha límite en 2028?']) {
+    const model = sdkModel([appCall('dates'), final('The on-time window ends November 6, 2026.', [])]);
+    const result = await createChatService({ model, now: () => new Date('2026-10-21T20:00:00Z') })(body(content, { language: content.startsWith('¿') ? 'es' : 'en' }));
+    assert.equal(result.answerKind, 'clarification');
+    assert.doesNotMatch(result.answer, /November 6|noviembre|October 1|December 1/);
+    assert.deepEqual(result.citations, []);
+    assert.deepEqual(result.programs, []);
+  }
+});
+
+test('explicit current calendar month questions are not mistaken for another school-year request', async () => {
+  const model = sdkModel([appCall('dates'), final('Ignored model prose.', [])]);
+  const result = await createChatService({ model, now: () => new Date('2026-10-21T20:00:00Z') })(body('Are applications open in October 2026?'));
+  assert.equal(result.answerKind, 'answer');
+  assert.match(result.answer, /2027–28/);
+  assert.match(result.answer, /November 6, 2026/);
+  assert.doesNotMatch(result.answer, /Which school year/);
+  const tools = createChatTools({ latestUserMessage: 'What about 2028–29?', now: () => new Date('2026-09-01T20:00:00Z') });
+  const guidance = await tools.getApplicationGuidance({ topic: 'dates' });
+  assert.equal(guidance.status, 'needs_review');
+  assert.equal(guidance.dates, null);
+  assert.equal(guidance.datesSummary, null);
+  assert.doesNotMatch(guidance.statusMessage, /October 1|November 6|December 1/);
 });

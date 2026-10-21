@@ -1,14 +1,19 @@
 # Hosted program helper
 
-The browser posts to the same-origin `POST /api/chat` Netlify Function. A bounded AI SDK `ToolLoopAgent` uses OpenAI Chat Completions through Netlify AI Gateway. The default model is `gpt-5.4-mini`. The server searches an exact, generated copy of the reviewed program catalog; it does not search the general web or treat all directory campuses as verified programs.
+The browser posts to the same-origin `POST /api/chat` Netlify Function. A bounded AI SDK `ToolLoopAgent` uses OpenAI Chat Completions through Netlify AI Gateway. The default model is `gpt-5.4-mini`. The server searches an exact, generated copy of the reviewed program catalog and the reviewed application guide; it does not search the general web or treat all directory campuses as verified programs.
 
 ## Grounding and comparison
 
 - `searchVerifiedPrograms` searches reviewed descriptions, canonical interest tags, and campus grade ranges. Missing grades are never guessed. Results are limited to six per search.
 - `getProgramDetails` retrieves canonical facts, source IDs, check dates, entry requirements, and off-campus notes.
+- `getApplicationGuidance` retrieves the shared application cycle, checklist, and official source IDs. Its current date comes from the server in Los Angeles time. Once the review deadline is reached, current-window date claims are withheld and families are directed to the official calendar.
 - `addToComparison` queues additive school IDs only after retrieval and an explicit comparison request. Unknown IDs, unreviewed schools, duplicates, and additions beyond three schools are rejected.
 - Structured final output contains plain answer text and retrieved citation IDs. For factual answers the server rejects invented citation IDs, raw URLs/HTML, and uncited retrieved results. Comparison confirmations discard model prose/citations and use the validated tool state to construct their text and official sources. The server appends mandatory grade, eligibility, and location caveats.
 - The browser renders model text with `textContent`, validates official HTTPS source URLs, and applies additions against its actual directory and current comparison. The browser reports which schools were added, already present, or rejected. Its three-school limit is authoritative.
+- Optional bounded context contains reviewed school IDs, the last displayed program order and catalog revision, and the finder’s selected grade/interests. The server resolves all IDs against current reviewed records; client-provided names, source URLs, or descriptive facts are never evidence. Stale ordered context cannot authorize ordinal additions.
+- Clarification replies use server-authored questions and contain no program claims, citations, or actions. Factual replies continue to require retrieved sources. Affirmative comparison commands are distinguished from informational questions and negation in English and Spanish.
+
+Reviewed school cards can prepare an editable AI question without sending it. New chat clears conversational context. Chat exposes actual comparison counts and a direct view action, synchronizes added/full button states, and keeps the start of each new answer visible.
 
 Sources remain the dated, human-reviewed records in `web/program_evidence.js`. They do not prove current seat availability, program-specific grade eligibility, admission probability, or school quality. AI prose can still be mistaken; families can open the linked official sources. This release does not implement live web research or automatic source verification.
 
@@ -39,7 +44,7 @@ npm run test:api
 npm run test:e2e
 ```
 
-The generated module includes source hashes, exact CDS joins, stable program IDs, and bilingual caveats. Changes to either school or reviewed program inputs require regeneration and review.
+The generated module includes source hashes, exact CDS joins, stable program IDs, bilingual caveats, and shared application guidance. Changes to school, reviewed program, or application data require regeneration and review.
 
 Unit tests use injected AI models and cover tool grounding, input bounds, citation forgery, comparison constraints, provider errors, and deadlines. HTTP tests cover body/origin/configuration errors and atomic limiter races. Browser tests mock the HTTP response to verify source links, plain-text rendering, actual comparison state, Spanish copy, and retries. These checks are distinct from a real hosted gateway smoke test; record the latter in release validation before claiming the model works live.
 
